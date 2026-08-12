@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1231,6 +1231,12 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  .ios-nav-bar, .app-header, .modal-overlay, .sheets-status-banner { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .glass-card { background: #fff !important; border: none !important; }
+}
   </style>
 </head>
 <body>
@@ -1245,7 +1251,7 @@ body {
       <div class="user-badge">
         <div class="avatar-ring">⚡</div>
         <div class="user-info">
-          <h2>Ayuno Intermitente</h2>
+          <h2>Ayuno Intermitente <button class="version-tag" id="app-version-header" onclick="openChangelogModal()" title="Ver novedades de esta versión" style="cursor: pointer; position: relative; top: -1px;">v6.3.0</button> <span id="btn-version-new-badge" class="version-tag" style="display: none; background: rgba(255, 183, 3, 0.2); color: #ffb703; border-color: rgba(255, 183, 3, 0.4);">🆕 Nuevo</span></h2>
           <p><span id="header-user-status">Modelo Base 16:8</span> • <span id="header-current-weight">-- kg</span></p>
         </div>
       </div>
@@ -1635,6 +1641,7 @@ body {
       </div>
     </section>
 
+
     <!-- VISTA 7: DASHBOARD METABÓLICO CON LÍNEAS DE TENDENCIA (v6.1.0) -->
     <section id="view-dashboard" class="view-section">
       <div class="glass-card">
@@ -1687,7 +1694,7 @@ body {
     </section>
 
     <footer class="app-footer">
-      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.1.0</span> • Base de Datos Local Autocontenida
+      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.3.0</span> • Base de Datos Local Autocontenida
     </footer>
 
   </div> <!-- /#app-container -->
@@ -1696,15 +1703,15 @@ body {
   <nav class="ios-nav-bar">
     <button class="nav-item active" data-view="timer" onclick="switchView('timer')">
       <span class="nav-item-icon">⏱️</span>
-      <span>Cronómetro</span>
+      <span>Ayuno</span>
     </button>
     <button class="nav-item" data-view="body" onclick="switchView('body')">
       <span class="nav-item-icon">🧬</span>
-      <span>Mi Cuerpo</span>
+      <span>Cuerpo</span>
     </button>
     <button class="nav-item" data-view="weight" onclick="switchView('weight')">
       <span class="nav-item-icon">⚖️</span>
-      <span>Mi Peso</span>
+      <span>Peso</span>
     </button>
     <button class="nav-item" data-view="dashboard" onclick="switchView('dashboard')">
       <span class="nav-item-icon">📈</span>
@@ -1716,7 +1723,7 @@ body {
     </button>
     <button class="nav-item" data-view="meds" onclick="switchView('meds')">
       <span class="nav-item-icon">💊</span>
-      <span>Fármacos</span>
+      <span>Meds</span>
     </button>
     <button class="nav-item" data-view="badges" onclick="switchView('badges')">
       <span class="nav-item-icon">🏆</span>
@@ -1754,9 +1761,73 @@ body {
         <span style="font-size: 11px; color: var(--text-secondary);">Meta de peso que usa el Agente IA, los gráficos y las insignias.</span>
       </div>
 
+      <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: var(--radius-md);">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--cyan-primary); cursor: pointer;">
+          <input type="checkbox" id="input-reminders-enabled" style="width: 18px; height: 18px; accent-color: var(--cyan-primary);"> 🔔 Recordatorios y Notificaciones
+        </label>
+        <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); cursor: pointer;">
+            <input type="checkbox" id="input-reminder-fast-end" style="accent-color: var(--cyan-primary);"> Avisar fin de ayuno (16h)
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); cursor: pointer;">
+            <input type="checkbox" id="input-reminder-routine" style="accent-color: var(--cyan-primary);"> Avisar hora de rutina de ejercicio
+          </label>
+          <button class="btn-primary btn-secondary btn-small" style="font-size: 11px; align-self: flex-start;" onclick="handleEnableNotifications()">🔔 Activar notificaciones del sistema</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 8px;">
+        <button class="btn-primary btn-secondary" onclick="handleExportBackup()">📤 Exportar datos (backup JSON)</button>
+        <button class="btn-primary btn-secondary" onclick="document.getElementById('file-backup-input').click()">📂 Restaurar datos desde backup</button>
+        <input type="file" id="file-backup-input" accept="application/json,.json" style="display: none;" onchange="handleImportBackup(this)">
+      </div>
+
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
         <button class="btn-primary" onclick="handleSaveConfigAndMeds()">💾 Guardar Configuración</button>
         <button class="btn-primary btn-secondary btn-small" onclick="closeConfigModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE NOVEDADES / REGISTRO DE CAMBIOS -->
+  <div id="modal-changelog" class="modal-overlay">
+    <div class="modal-card" style="max-width: 430px;">
+      <h3 style="font-size: 20px; font-weight: 700; color: #fff;">📣 Novedades de la App</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Registro de cambios del software.</p>
+      <div style="max-height: 55vh; overflow-y: auto; margin-top: 14px;">
+        <div style="margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div style="color: var(--cyan-primary); font-weight: 800; font-size: 14px;">v6.3.0 — Actual</div>
+          <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.7; margin: 6px 0 0 0;">
+            <li>🔔 Recordatorios y notificaciones (fin de ayuno y hora de rutina).</li>
+            <li>📤 Backup y restauración de todos tus datos (exportar/importar JSON).</li>
+          </ul>
+        </div>
+        <div style="margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div style="color: #fff; font-weight: 800; font-size: 14px;">v6.2.0</div>
+          <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.7; margin: 6px 0 0 0;">
+            <li>🎯 Peso objetivo editable (antes fijo en 82 kg).</li>
+            <li>🎂 Edad configurable con ajustes automáticos del Agente IA en las sugerencias calóricas.</li>
+            <li>🗑️ Eliminación de rutinas/actividades de ejercicio.</li>
+            <li>📣 Registro de cambios visible al actualizar.</li>
+          </ul>
+        </div>
+        <div style="margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div style="color: #fff; font-weight: 800; font-size: 14px;">v6.1.0</div>
+          <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.7; margin: 6px 0 0 0;">
+            <li>Rutinas de ejercicio configurables (Taekwondo, pesas, etc.) con registro rápido.</li>
+            <li>Agente IA con red neuronal TensorFlow.js para proyección de meta.</li>
+          </ul>
+        </div>
+        <div>
+          <div style="color: #fff; font-weight: 800; font-size: 14px;">v6.0.0 y anteriores</div>
+          <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.7; margin: 6px 0 0 0;">
+            <li>Ayuno intermitente 16:8 con temporizador y etapas de autofagia.</li>
+            <li>Base de datos local autocontenida (IndexedDB) y PWA instalable.</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+        <button class="btn-primary" onclick="closeChangelogModal()">Entendido</button>
       </div>
     </div>
   </div>
@@ -1952,7 +2023,7 @@ body {
        SCRIPTS JAVASCRIPT v4.0.0 MULTI-DEVICE REAL-TIME SYNC
        ==================================================================== -->
   <script>
-    const APP_VERSION = 'v6.1.0';
+    const APP_VERSION = 'v6.3.0';
 
     function parseNumber(val) {
       if (val === null || val === undefined || val === '') return null;
@@ -2027,13 +2098,14 @@ body {
       ACTIVE_FAST: 'fasting_app_active', UNLOCKED_BADGES: 'fasting_app_badges',
       USER_MEDS: 'fasting_app_meds', ROUTINE_CONFIG: 'fasting_app_routine_config',
       BMR_VAL: 'fasting_app_bmr', AGE_VAL: 'fasting_app_age',
-      TARGET_WEIGHT: 'fasting_app_target_weight'
+      TARGET_WEIGHT: 'fasting_app_target_weight', LAST_VERSION: 'fasting_app_last_version',
+      REMINDERS: 'fasting_app_reminders'
     };
 
     /* 2.1 BASE DE DATOS AUTOCONTENIDA (INDEXEDDB) PARA FUNCIONAR EN GITHUB PAGES / PWA
        IndexedDB actúa como base de datos persistente y localStorage como caché síncrona. */
     const IDB_DB_NAME = 'ayuno_intermitente_db';
-    const IDB_DB_VERSION = 1;
+    const IDB_DB_VERSION = 2;
     const IDB_STORES = {
       fasting_logs: 'fasting_logs',
       weight_logs: 'weight_logs',
@@ -2043,7 +2115,8 @@ body {
       badges: 'badges',
       meds: 'meds',
       routine: 'routine',
-      settings: 'settings'
+      settings: 'settings',
+      reminders: 'reminders'
     };
     const IDB_KEY = 'all';
 
@@ -2295,6 +2368,63 @@ body {
         return num;
       },
 
+      getLocalReminders() {
+        const data = localStorage.getItem(STORAGE_KEYS.REMINDERS);
+        if (data) {
+          try { return JSON.parse(data); } catch(e) {}
+        }
+        return { enabled: false, fastEnd: false, routine: false };
+      },
+      saveRemindersLocally(cfg) {
+        localStorage.setItem(STORAGE_KEYS.REMINDERS, JSON.stringify(cfg));
+        IndexedDBEngine.put(IDB_STORES.reminders, cfg);
+        return cfg;
+      },
+
+      /* ---- BACKUP: EXPORTAR E IMPORTAR TODOS LOS DATOS ---- */
+      exportAllData() {
+        return {
+          app: 'Ayuno Intermitente 16:8',
+          exportedAt: new Date().toISOString(),
+          version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v6.3.0',
+          data: {
+            activeFast: this.getLocalActiveFast(),
+            fastingLogs: this.getLocalFastingLogs(),
+            weightLogs: this.getLocalWeightLogs(),
+            exerciseLogs: this.getLocalExerciseLogs(),
+            pauseLogs: this.getLocalPauseLogs(),
+            unlockedBadges: this.getLocalUnlockedBadges(),
+            userMeds: this.getLocalUserMeds(),
+            routineConfig: this.getLocalRoutineConfig(),
+            reminders: this.getLocalReminders(),
+            settings: {
+              bmr: this.getLocalBMR(),
+              age: this.getLocalAge(),
+              targetWeight: this.getLocalTargetWeight()
+            }
+          }
+        };
+      },
+      importAllData(payload) {
+        if (!payload || !payload.data) return false;
+        const d = payload.data;
+        if (Array.isArray(d.fastingLogs)) localStorage.setItem(STORAGE_KEYS.FASTING_LOGS, JSON.stringify(d.fastingLogs));
+        if (Array.isArray(d.weightLogs)) localStorage.setItem(STORAGE_KEYS.WEIGHT_LOGS, JSON.stringify(d.weightLogs));
+        if (Array.isArray(d.exerciseLogs)) localStorage.setItem(STORAGE_KEYS.EXERCISE_LOGS, JSON.stringify(d.exerciseLogs));
+        if (Array.isArray(d.pauseLogs)) localStorage.setItem(STORAGE_KEYS.PAUSE_LOGS, JSON.stringify(d.pauseLogs));
+        if (Array.isArray(d.unlockedBadges)) localStorage.setItem(STORAGE_KEYS.UNLOCKED_BADGES, JSON.stringify(d.unlockedBadges));
+        if (Array.isArray(d.userMeds)) localStorage.setItem(STORAGE_KEYS.USER_MEDS, JSON.stringify(d.userMeds));
+        if (d.activeFast) localStorage.setItem(STORAGE_KEYS.ACTIVE_FAST, JSON.stringify(d.activeFast));
+        if (d.routineConfig) localStorage.setItem(STORAGE_KEYS.ROUTINE_CONFIG, JSON.stringify(d.routineConfig));
+        if (d.reminders) localStorage.setItem(STORAGE_KEYS.REMINDERS, JSON.stringify(d.reminders));
+        if (d.settings) {
+          if (d.settings.bmr) localStorage.setItem(STORAGE_KEYS.BMR_VAL, String(d.settings.bmr));
+          if (d.settings.age) localStorage.setItem(STORAGE_KEYS.AGE_VAL, String(d.settings.age));
+          if (d.settings.targetWeight) localStorage.setItem(STORAGE_KEYS.TARGET_WEIGHT, String(d.settings.targetWeight));
+        }
+        return true;
+      },
+
       /* 2.2 INICIALIZACIÓN: FUSIONA IndexedDB <-> localStorage (fuente única de datos)
          IndexedDB conserva los datos incluso si se borra la caché del navegador. */
       async initSelfContainedDatabase() {
@@ -2363,6 +2493,14 @@ body {
           localStorage.setItem(STORAGE_KEYS.TARGET_WEIGHT, String(finalTw));
           await IndexedDBEngine.put(IDB_STORES.settings, { bmr: finalBmr, age: finalAge, targetWeight: finalTw });
 
+          const remLS = localStorage.getItem(STORAGE_KEYS.REMINDERS);
+          const remIDB = await IndexedDBEngine.get(IDB_STORES.reminders);
+          const finalRem = (remLS && remLS !== 'null') ? JSON.parse(remLS) : remIDB;
+          if (finalRem) {
+            localStorage.setItem(STORAGE_KEYS.REMINDERS, JSON.stringify(finalRem));
+            await IndexedDBEngine.put(IDB_STORES.reminders, finalRem);
+          }
+
           if (statusText) statusText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
         } catch (e) {
           console.warn('IndexedDB no disponible, usando localStorage:', e);
@@ -2399,7 +2537,7 @@ body {
     }
 
     let appState = {
-      activeFast: null, fastingLogs: [], weightLogs: [], exerciseLogs: [], pauseLogs: [], unlockedBadges: [], userMeds: [], routineConfig: null, bmr: 1400, age: 35, targetWeight: 82, timerInterval: null
+      activeFast: null, fastingLogs: [], weightLogs: [], exerciseLogs: [], pauseLogs: [], unlockedBadges: [], userMeds: [], routineConfig: null, bmr: 1400, age: 35, targetWeight: 82, reminders: null, timerInterval: null
     };
 
     window.openRoutineModal = function() {
@@ -2501,6 +2639,7 @@ body {
       if (!appState.bmr) appState.bmr = DataAdapter.getLocalBMR();
       if (!appState.age) appState.age = DataAdapter.getLocalAge();
       if (!appState.targetWeight) appState.targetWeight = DataAdapter.getLocalTargetWeight();
+      if (!appState.reminders) appState.reminders = DataAdapter.getLocalReminders();
 
       if (inputMeds && appState.userMeds) {
         inputMeds.value = appState.userMeds.join(', ');
@@ -2514,6 +2653,14 @@ body {
       if (inputTw) {
         inputTw.value = appState.targetWeight || 82;
       }
+
+      const rem = appState.reminders || {};
+      const remEnabled = document.getElementById('input-reminders-enabled');
+      const remFastEnd = document.getElementById('input-reminder-fast-end');
+      const remRoutine = document.getElementById('input-reminder-routine');
+      if (remEnabled) remEnabled.checked = !!rem.enabled;
+      if (remFastEnd) remFastEnd.checked = !!rem.fastEnd;
+      if (remRoutine) remRoutine.checked = !!rem.routine;
       if (modal) modal.classList.add('active');
     };
     window.closeConfigModal = function() {
@@ -2547,6 +2694,17 @@ body {
       if (inputTw) {
         const val = parseNumber(inputTw.value);
         appState.targetWeight = DataAdapter.saveTargetWeightLocally(val !== null ? val : 82);
+      }
+
+      const remEnabled = document.getElementById('input-reminders-enabled');
+      if (remEnabled) {
+        const remCfg = {
+          enabled: remEnabled.checked,
+          fastEnd: !!(document.getElementById('input-reminder-fast-end') && document.getElementById('input-reminder-fast-end').checked),
+          routine: !!(document.getElementById('input-reminder-routine') && document.getElementById('input-reminder-routine').checked)
+        };
+        appState.reminders = DataAdapter.saveRemindersLocally(remCfg);
+        if (remCfg.enabled) handleEnableNotifications();
       }
       closeConfigModal();
       renderMedsView();
@@ -3074,9 +3232,31 @@ body {
       if (fTag) fTag.textContent = APP_VERSION;
     }
 
+    window.openChangelogModal = function() {
+      const modal = document.getElementById('modal-changelog');
+      if (modal) modal.classList.add('active');
+    };
+    window.closeChangelogModal = function() {
+      const modal = document.getElementById('modal-changelog');
+      if (modal) modal.classList.remove('active');
+    };
+
+    function checkForVersionUpdate() {
+      try {
+        const lastSeen = localStorage.getItem(STORAGE_KEYS.LAST_VERSION);
+        if (lastSeen !== APP_VERSION) {
+          localStorage.setItem(STORAGE_KEYS.LAST_VERSION, APP_VERSION);
+          const newBadge = document.getElementById('btn-version-new-badge');
+          if (newBadge) newBadge.style.display = 'inline-block';
+          setTimeout(() => { openChangelogModal(); }, 900);
+        }
+      } catch(e) {}
+    }
+
     async function initApp() {
       try {
         renderVersionInfo();
+        checkForVersionUpdate();
         initCanvasConfetti();
 
         // Cargar la base de datos autocontenida (IndexedDB <-> localStorage)
@@ -3093,6 +3273,7 @@ body {
         appState.bmr = DataAdapter.getLocalBMR();
         appState.age = DataAdapter.getLocalAge();
         appState.targetWeight = DataAdapter.getLocalTargetWeight();
+        appState.reminders = DataAdapter.getLocalReminders();
 
         try { renderProfileHeader(); } catch(e) { console.error('Header err:', e); }
         try { renderWeightView(); } catch(e) { console.error('Weight err:', e); }
@@ -3103,6 +3284,7 @@ body {
         try { renderBodyStagesList(); } catch(e) { console.error('Body err:', e); }
 
         startTimerLoop();
+        startReminderLoop();
 
         try { runTensorFlowAiAgentAuto(); } catch(e) { console.error('AI err:', e); }
         try { syncCloudDataUnified(); } catch(e) { console.error('Sync err:', e); }
@@ -3116,6 +3298,99 @@ body {
     } else {
       initApp();
     }
+
+
+    /* 3.11 RECORDATORIOS Y NOTIFICACIONES */
+    let reminderLoopInterval = null;
+    function startReminderLoop() {
+      if (reminderLoopInterval) clearInterval(reminderLoopInterval);
+      checkReminders();
+      reminderLoopInterval = setInterval(checkReminders, 30000);
+    }
+
+    function canNotify() {
+      return 'Notification' in window && Notification.permission === 'granted';
+    }
+
+    window.handleEnableNotifications = function() {
+      if (!('Notification' in window)) { alert('Este navegador no soporta notificaciones del sistema.'); return; }
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') showToast('🔔 Notificaciones del sistema activadas.');
+        else showToast('⚠️ Permiso de notificaciones denegado.');
+      }).catch(() => showToast('⚠️ No se pudo solicitar el permiso de notificaciones.'));
+    };
+
+    function notifyUser(title, body) {
+      try {
+        if (canNotify()) new Notification(title, { body: body, icon: 'icon-192.png' });
+        showToast(`${title} ${body}`);
+      } catch(e) {}
+    }
+
+    function checkReminders() {
+      try {
+        const cfg = appState.reminders;
+        if (!cfg || !cfg.enabled) return;
+        const now = new Date();
+
+        if (cfg.fastEnd && appState.activeFast) {
+          const start = new Date(appState.activeFast.startTime);
+          const targetEnd = new Date(start.getTime() + 16 * 3600 * 1000);
+          if (now >= targetEnd && now < new Date(targetEnd.getTime() + 10 * 60000)) {
+            notifyUser('⏱️ ¡Tu ayuno de 16h terminó!', 'Puedes romper el ayuno ahora.');
+          }
+        }
+
+        if (cfg.routine && appState.routineConfig) {
+          const rc = appState.routineConfig;
+          const parts = String(rc.time || '19:00').split(':');
+          const h = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          if (rc.days.includes(now.getDay()) && now.getHours() === h && now.getMinutes() === m) {
+            notifyUser(`🥋 ¡Hora de ${rc.name}!`, `Sesión habitual de ${rc.duration} min programada.`);
+          }
+        }
+      } catch(e) {}
+    }
+
+    /* 3.12 BACKUP Y RESTAURACIÓN */
+    window.handleExportBackup = function() {
+      try {
+        const payload = DataAdapter.exportAllData();
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ayuno-backup-${new Date().toISOString().substring(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('📤 Backup exportado correctamente.');
+      } catch(e) {
+        alert('No se pudo exportar el backup: ' + e.message);
+      }
+    };
+
+    window.handleImportBackup = function(input) {
+      const file = input && input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const payload = JSON.parse(e.target.result);
+          if (!payload || !payload.data) throw new Error('El archivo no es un backup válido.');
+          if (!confirm('Esto REEMPLAZARÁ todos tus datos actuales con los del backup. ¿Continuar?')) return;
+          DataAdapter.importAllData(payload);
+          showToast('📂 Backup restaurado. Recargando...');
+          setTimeout(() => location.reload(), 600);
+        } catch(err) {
+          alert('Error al leer el backup: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      if (input) input.value = '';
+    };
 
     function startTimerLoop() {
       if (appState.timerInterval) clearInterval(appState.timerInterval);

@@ -2,9 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Ayuno Intermitente 18:6 | Control & Meta 82 Kg</title>
-  <meta name="description" content="Aplicación web estilo iOS Glassmorphism para el control de ayuno intermitente 18:6, seguimiento metabólico y meta de peso de 82 kg con Google Sheets y Agente IA TensorFlow.js.">
+  <meta name="description" content="Aplicación web estilo iOS Glassmorphism para el control de ayuno intermitente 16:8, seguimiento metabólico y meta de peso de 82 kg con base de datos local autocontenida y Agente IA TensorFlow.js.">
+
+  <!-- PWA: App instalable a pantalla completa (no dentro del navegador) -->
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#050b18">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ayuno 16:8">
+  <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+
   <!-- Fuentes Google -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,12 +34,14 @@
   /* Paleta de Colores de Fondo y Cristales */
   --bg-main: #050b18;
   --bg-gradient: radial-gradient(circle at 50% 0%, #0d2149 0%, #050b18 70%);
-  --glass-bg: rgba(14, 28, 54, 0.75);
-  --glass-card: rgba(255, 255, 255, 0.08);
-  --glass-card-hover: rgba(255, 255, 255, 0.14);
-  --glass-border: rgba(255, 255, 255, 0.18);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.55);
-  --glass-blur: blur(20px);
+  --glass-bg: rgba(16, 30, 60, 0.55);
+  --glass-bg-strong: rgba(8, 18, 40, 0.72);
+  --glass-card: rgba(255, 255, 255, 0.09);
+  --glass-card-hover: rgba(255, 255, 255, 0.16);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-border-bright: rgba(255, 255, 255, 0.3);
+  --glass-shadow: 0 12px 44px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(22px) saturate(170%);
 
   /* Acentos Azules, Neón iOS y Volcanes */
   --cyan-primary: #00f5d4;
@@ -70,7 +84,11 @@
 
 body {
   background: var(--bg-main);
-  background-image: var(--bg-gradient);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(0, 180, 216, 0.16), transparent 42%),
+    radial-gradient(circle at 88% 18%, rgba(114, 9, 183, 0.14), transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(0, 245, 212, 0.12), transparent 45%),
+    var(--bg-gradient);
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
@@ -97,12 +115,13 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  background: var(--glass-bg);
+  background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04) 45%, rgba(8,18,40,0.35));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
   border-radius: var(--radius-xl);
-  box-shadow: var(--glass-shadow);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 14px 40px rgba(0,0,0,0.5);
 }
 
 .user-badge {
@@ -162,8 +181,9 @@ body {
 
 /* Indicador de Conexión a Google Sheets */
 .sheets-status-banner {
-  background: rgba(0, 180, 216, 0.12);
+  background: linear-gradient(160deg, rgba(0, 180, 216, 0.16), rgba(0, 180, 216, 0.06));
   border: 1px solid rgba(0, 180, 216, 0.3);
+  border-top-color: rgba(0, 180, 216, 0.45);
   border-radius: var(--radius-lg);
   padding: 10px 14px;
   font-size: 12px;
@@ -172,6 +192,7 @@ body {
   justify-content: space-between;
   color: #fff;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 .sheets-status-banner a {
@@ -182,15 +203,29 @@ body {
 
 /* Tarjetas Estilo Glassmorphism */
 .glass-card {
-  background: var(--glass-bg);
+  background: linear-gradient(160deg, rgba(255,255,255,0.12), rgba(255,255,255,0.045) 32%, rgba(255,255,255,0.015) 62%, rgba(10,22,46,0.28));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
   border-radius: var(--radius-xl);
   padding: 22px;
-  box-shadow: var(--glass-shadow);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset 0 -1px 0 rgba(255,255,255,0.04),
+    0 16px 48px rgba(0,0,0,0.5);
   position: relative;
   overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 42%;
+  border-radius: inherit;
+  background: radial-gradient(120% 90% at 22% 0%, rgba(255,255,255,0.12), transparent 58%);
+  pointer-events: none;
 }
 
 /* EFECTO VOLCÁN / ALERTA PULSANTE */
@@ -211,9 +246,10 @@ body {
 
 /* Tarjeta IA Especial */
 .ai-agent-card {
-  background: linear-gradient(135deg, rgba(114, 9, 183, 0.25), rgba(0, 180, 216, 0.25));
-  border: 1px solid rgba(0, 245, 212, 0.4);
-  box-shadow: 0 0 20px rgba(114, 9, 183, 0.3);
+  background: linear-gradient(135deg, rgba(114, 9, 183, 0.22), rgba(0, 180, 216, 0.18));
+  border: 1px solid rgba(0, 245, 212, 0.35);
+  border-top-color: rgba(0, 245, 212, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 0 24px rgba(114, 9, 183, 0.25);
 }
 
 .ai-header {
@@ -243,12 +279,15 @@ body {
 }
 
 .ai-prediction-box {
-  background: rgba(5, 11, 24, 0.6);
+  background: linear-gradient(160deg, rgba(5, 11, 24, 0.75), rgba(5, 11, 24, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   margin-top: 6px;
   font-size: 13px;
   line-height: 1.5;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 /* Secciones / Vistas Pestañas */
@@ -357,8 +396,11 @@ body {
   flex: 1;
   padding: 6px 2px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.18);
   font-size: 10px;
   font-weight: 700;
   color: var(--text-muted);
@@ -367,14 +409,14 @@ body {
 }
 
 .phase-step-pill.active {
-  background: rgba(0, 245, 212, 0.2);
+  background: linear-gradient(160deg, rgba(0, 245, 212, 0.28), rgba(0, 245, 212, 0.1));
   border-color: var(--cyan-primary);
   color: var(--cyan-primary);
-  box-shadow: 0 0 10px rgba(0, 245, 212, 0.3);
+  box-shadow: 0 0 12px rgba(0, 245, 212, 0.3), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .phase-step-pill.completed {
-  background: rgba(0, 180, 216, 0.2);
+  background: linear-gradient(160deg, rgba(0, 180, 216, 0.28), rgba(0, 180, 216, 0.1));
   border-color: var(--blue-electric);
   color: #fff;
 }
@@ -391,13 +433,13 @@ body {
   width: 100%;
   padding: 16px;
   border-radius: var(--radius-lg);
-  border: none;
-  background: linear-gradient(135deg, var(--blue-electric), var(--blue-deep));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0.02) 48%), linear-gradient(135deg, var(--blue-electric), var(--blue-deep));
   color: #fff;
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 180, 216, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 8px 26px rgba(0, 180, 216, 0.35);
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
@@ -410,15 +452,18 @@ body {
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #ff4d6d, #c9184a);
-  box-shadow: 0 6px 20px rgba(255, 77, 109, 0.35);
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0) 45%), linear-gradient(135deg, #ff4d6d, #c9184a);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 8px 24px rgba(255, 77, 109, 0.35);
 }
 
 .btn-secondary {
-  background: var(--glass-card);
-  border: 1px solid var(--glass-border);
+  background: linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05));
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.3);
   color: var(--text-primary);
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18);
 }
 
 .btn-small {
@@ -432,11 +477,13 @@ body {
 .current-stage-card {
   margin-top: 15px;
   width: 100%;
-  background: rgba(0, 180, 216, 0.12);
-  border: 1px solid rgba(0, 180, 216, 0.3);
+  background: linear-gradient(160deg, rgba(0, 180, 216, 0.2), rgba(0, 180, 216, 0.06) 60%, rgba(8,18,40,0.3));
+  border: 1px solid rgba(0, 180, 216, 0.32);
+  border-top-color: rgba(0, 245, 212, 0.45);
   border-radius: var(--radius-lg);
   padding: 16px;
   text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .stage-header {
@@ -471,17 +518,21 @@ body {
 }
 
 .stage-card {
-  background: var(--glass-card);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-lg);
   padding: 16px;
   position: relative;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .stage-card.current-active {
-  background: rgba(0, 245, 212, 0.12);
+  background: linear-gradient(160deg, rgba(0, 245, 212, 0.2), rgba(0, 245, 212, 0.06));
   border-color: var(--cyan-primary);
-  box-shadow: 0 0 20px rgba(0, 245, 212, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 24px rgba(0, 245, 212, 0.2);
 }
 
 .stage-card.current-active::before {
@@ -598,8 +649,9 @@ body {
 }
 
 .motivation-quote {
-  background: rgba(255, 183, 3, 0.12);
+  background: linear-gradient(160deg, rgba(255, 183, 3, 0.14), rgba(255, 183, 3, 0.05));
   border: 1px solid rgba(255, 183, 3, 0.35);
+  border-top-color: rgba(255, 230, 102, 0.5);
   color: #ffe066;
   padding: 14px;
   border-radius: var(--radius-md);
@@ -607,6 +659,7 @@ body {
   font-style: italic;
   margin-top: 15px;
   line-height: 1.4;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
 }
 
 .weight-history-list {
@@ -621,10 +674,14 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: var(--glass-card);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.2);
   font-size: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .weight-diff {
@@ -653,8 +710,11 @@ body {
 }
 
 .badge-card {
-  background: var(--glass-card);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-lg);
   padding: 16px;
   display: flex;
@@ -663,14 +723,15 @@ body {
   text-align: center;
   opacity: 0.45;
   filter: grayscale(80%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .badge-card.unlocked {
   opacity: 1;
   filter: grayscale(0%);
   border-color: var(--cyan-primary);
-  background: rgba(0, 180, 216, 0.15);
-  box-shadow: 0 0 15px rgba(0, 180, 216, 0.25);
+  background: linear-gradient(160deg, rgba(0, 180, 216, 0.22), rgba(0, 180, 216, 0.07));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 20px rgba(0, 180, 216, 0.25);
 }
 
 .badge-icon {
@@ -699,16 +760,17 @@ body {
   transform: translateX(-50%);
   width: calc(100% - 32px);
   max-width: 440px;
-  background: rgba(10, 20, 40, 0.92);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background: rgba(12, 24, 50, 0.6);
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.28);
   border-radius: var(--radius-full);
   display: flex;
   justify-content: space-around;
   align-items: center;
   padding: 8px 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 18px 48px rgba(0, 0, 0, 0.65);
   z-index: 1000;
 }
 
@@ -726,6 +788,7 @@ body {
   padding: 5px 4px;
   border-radius: var(--radius-md);
   flex: 1;
+  position: relative;
   transition: all var(--transition-fast);
 }
 
@@ -736,6 +799,20 @@ body {
 .nav-item.active {
   color: var(--cyan-primary);
   transform: translateY(-2px);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46px;
+  height: 32px;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 245, 212, 0.14);
+  border: 1px solid rgba(0, 245, 212, 0.32);
+  border-radius: var(--radius-full);
+  pointer-events: none;
 }
 
 .nav-item.active .nav-item-icon {
@@ -749,9 +826,9 @@ body {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(5, 11, 24, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(5, 11, 24, 0.78);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -768,14 +845,29 @@ body {
 }
 
 .modal-card {
-  background: var(--glass-bg);
+  background: linear-gradient(165deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05) 40%, rgba(10,22,46,0.32));
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
   border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-bright);
   border-radius: var(--radius-xl);
   padding: 24px;
   width: 100%;
   max-width: 400px;
-  box-shadow: var(--glass-shadow);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 24px 70px rgba(0, 0, 0, 0.6);
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 46%;
+  border-radius: inherit;
+  background: radial-gradient(130% 100% at 20% 0%, rgba(255,255,255,0.14), transparent 60%);
+  pointer-events: none;
 }
 
 .form-group {
@@ -801,10 +893,18 @@ body {
   font-size: 16px;
   outline: none;
   width: 100%;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  transition: all var(--transition-fast);
 }
 
 .form-input:focus {
   border-color: var(--cyan-primary);
+  background: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 0 0 4px rgba(0, 245, 212, 0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
 }
 
 #confetti-canvas {
@@ -829,12 +929,13 @@ body {
    ESTILOS MÓDULO DE EJERCICIO, TAIKWONDO & PASOS HUAWEI D2
    ========================================================================== */
 .taekwondo-banner {
-  background: linear-gradient(135deg, rgba(255, 84, 0, 0.25), rgba(114, 9, 183, 0.25));
-  border: 1px solid rgba(255, 84, 0, 0.5);
+  background: linear-gradient(135deg, rgba(255, 84, 0, 0.2), rgba(114, 9, 183, 0.22));
+  border: 1px solid rgba(255, 84, 0, 0.4);
+  border-top-color: rgba(255, 132, 44, 0.6);
   border-radius: var(--radius-lg);
   padding: 16px;
   margin-bottom: 15px;
-  box-shadow: 0 0 20px rgba(255, 84, 0, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 20px rgba(255, 84, 0, 0.2);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -857,8 +958,11 @@ body {
 }
 
 .preset-card {
-  background: var(--glass-card);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-lg);
   padding: 14px;
   display: flex;
@@ -866,14 +970,15 @@ body {
   align-items: center;
   text-align: center;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
   transition: all var(--transition-smooth);
 }
 
 .preset-card:hover, .preset-card:active {
-  background: rgba(0, 180, 216, 0.2);
+  background: linear-gradient(160deg, rgba(0, 180, 216, 0.28), rgba(0, 180, 216, 0.1));
   border-color: var(--cyan-primary);
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 245, 212, 0.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 26px rgba(0, 245, 212, 0.25);
 }
 
 .preset-icon {
@@ -894,12 +999,14 @@ body {
 }
 
 .steps-hero-box {
-  background: rgba(0, 245, 212, 0.08);
-  border: 1px solid rgba(0, 245, 212, 0.25);
+  background: linear-gradient(160deg, rgba(0, 245, 212, 0.14), rgba(0, 180, 216, 0.05));
+  border: 1px solid rgba(0, 245, 212, 0.28);
+  border-top-color: rgba(0, 245, 212, 0.45);
   border-radius: var(--radius-lg);
   padding: 16px;
   text-align: center;
   margin-bottom: 15px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 .steps-count {
@@ -914,10 +1021,14 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: var(--glass-card);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-md);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.2);
   margin-bottom: 8px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 /* HORARIOS DE INICIO Y FIN Y MODELOS ADAPTATIVOS */
@@ -931,11 +1042,15 @@ body {
 
 .schedule-pill {
   flex: 1;
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
+  border-top-color: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-md);
   padding: 10px 8px;
   text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .schedule-pill-label {
@@ -1036,15 +1151,19 @@ body {
   .preset-card {
     padding: 10px 6px;
   }
+}
 
 /* Dashboard & SVG Chart Styles (v6.1.0) */
 .chart-card-container {
-  background: rgba(14, 28, 54, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(160deg, rgba(14, 28, 54, 0.75), rgba(14, 28, 54, 0.45));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.28);
   border-radius: var(--radius-lg);
   padding: 16px;
   margin-top: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .chart-header {
@@ -1084,6 +1203,34 @@ body {
   width: 100%;
   height: 100%;
 }
+
+/* Barra de scroll sutil estilo iOS */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Reduce animaciones si el usuario lo prefiere */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
   </style>
 </head>
 <body>
@@ -1103,6 +1250,9 @@ body {
         </div>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="btn-install-app" class="btn-primary btn-secondary btn-small" onclick="installPwa()" title="Instalar como aplicación en pantalla completa" style="padding: 6px 12px; font-weight: 700; border-radius: var(--radius-full); font-size: 11px; display: none;">
+          📲 Instalar
+        </button>
         <button class="btn-primary btn-secondary btn-small" onclick="switchView('dashboard')" style="padding: 6px 12px; font-weight: 700; border-radius: var(--radius-full); font-size: 11px;">
           📈 Dashboard
         </button>
@@ -1112,9 +1262,9 @@ body {
       </div>
     </header>
 
-    <!-- Estado de Base de Datos Google Sheets -->
+    <!-- Estado de Base de Datos Autocontenida -->
     <div id="sheets-connection-banner" class="sheets-status-banner" onclick="openConfigModal()">
-      <span id="sheets-status-text">📊 Conectando con Google Sheets...</span>
+      <span id="sheets-status-text">🗄️ Iniciando base de datos local autocontenida...</span>
       <span id="sheets-link-container"></span>
     </div>
 
@@ -1537,7 +1687,7 @@ body {
     </section>
 
     <footer class="app-footer">
-      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.1.0</span> • Real-Time Cloud Sync
+      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.1.0</span> • Base de Datos Local Autocontenida
     </footer>
 
   </div> <!-- /#app-container -->
@@ -1863,6 +2013,63 @@ body {
       BMR_VAL: 'fasting_app_bmr'
     };
 
+    /* 2.1 BASE DE DATOS AUTOCONTENIDA (INDEXEDDB) PARA FUNCIONAR EN GITHUB PAGES / PWA
+       IndexedDB actúa como base de datos persistente y localStorage como caché síncrona. */
+    const IDB_DB_NAME = 'ayuno_intermitente_db';
+    const IDB_DB_VERSION = 1;
+    const IDB_STORES = {
+      fasting_logs: 'fasting_logs',
+      weight_logs: 'weight_logs',
+      exercise_logs: 'exercise_logs',
+      pause_logs: 'pause_logs',
+      active_fast: 'active_fast',
+      badges: 'badges',
+      meds: 'meds',
+      routine: 'routine',
+      settings: 'settings'
+    };
+    const IDB_KEY = 'all';
+
+    const IndexedDBEngine = {
+      db: null,
+      open() {
+        return new Promise((resolve, reject) => {
+          if (this.db) return resolve(this.db);
+          if (typeof indexedDB === 'undefined') return reject(new Error('IndexedDB no soportado'));
+          const req = indexedDB.open(IDB_DB_NAME, IDB_DB_VERSION);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            Object.keys(IDB_STORES).forEach(name => {
+              if (!db.objectStoreNames.contains(name)) db.createObjectStore(name);
+            });
+          };
+          req.onsuccess = (e) => { this.db = e.target.result; resolve(this.db); };
+          req.onerror = () => reject(req.error || new Error('Error abriendo IndexedDB'));
+          req.onblocked = () => reject(new Error('IndexedDB bloqueada'));
+        });
+      },
+      get(storeName) {
+        return this.open().then(db => new Promise((resolve) => {
+          try {
+            const tx = db.transaction(storeName, 'readonly');
+            const r = tx.objectStore(storeName).get(IDB_KEY);
+            r.onsuccess = () => resolve(r.result);
+            r.onerror = () => resolve(undefined);
+          } catch(e) { resolve(undefined); }
+        })).catch(() => undefined);
+      },
+      put(storeName, value) {
+        return this.open().then(db => new Promise((resolve) => {
+          try {
+            const tx = db.transaction(storeName, 'readwrite');
+            tx.objectStore(storeName).put(value, IDB_KEY);
+            tx.oncomplete = () => resolve(true);
+            tx.onerror = () => resolve(false);
+          } catch(e) { resolve(false); }
+        })).catch(() => false);
+      }
+    };
+
     const DataAdapter = {
       isGoogleAppsScript() {
         return typeof google !== 'undefined' && google.script && google.script.run;
@@ -1879,6 +2086,7 @@ body {
         if (this.isGoogleAppsScript()) {
           try { google.script.run.saveActiveFastState(fastData); } catch(e) {}
         }
+        IndexedDBEngine.put(IDB_STORES.active_fast, fastData);
       },
 
       getLocalFastingLogs() {
@@ -1889,6 +2097,7 @@ body {
         const logs = this.getLocalFastingLogs();
         logs.unshift(logEntry);
         localStorage.setItem(STORAGE_KEYS.FASTING_LOGS, JSON.stringify(logs));
+        IndexedDBEngine.put(IDB_STORES.fasting_logs, logs);
         return logs;
       },
 
@@ -1924,6 +2133,7 @@ body {
 
         logs = this.deduplicateDailyLogs(logs);
         localStorage.setItem(STORAGE_KEYS.WEIGHT_LOGS, JSON.stringify(logs));
+        IndexedDBEngine.put(IDB_STORES.weight_logs, logs);
         return logs;
       },
 
@@ -1952,12 +2162,14 @@ body {
         logs.unshift(entry);
         logs.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem(STORAGE_KEYS.EXERCISE_LOGS, JSON.stringify(logs));
+        IndexedDBEngine.put(IDB_STORES.exercise_logs, logs);
         return logs;
       },
       deleteExerciseLogLocally(id) {
         let logs = this.getLocalExerciseLogs();
         logs = logs.filter(e => String(e.id) !== String(id));
         localStorage.setItem(STORAGE_KEYS.EXERCISE_LOGS, JSON.stringify(logs));
+        IndexedDBEngine.put(IDB_STORES.exercise_logs, logs);
         if (this.isGoogleAppsScript()) {
           try { google.script.run.deleteExerciseLog(id); } catch(e) {}
         }
@@ -1972,6 +2184,7 @@ body {
         const logs = this.getLocalPauseLogs();
         logs.unshift(pauseEntry);
         localStorage.setItem(STORAGE_KEYS.PAUSE_LOGS, JSON.stringify(logs));
+        IndexedDBEngine.put(IDB_STORES.pause_logs, logs);
         if (this.isGoogleAppsScript()) {
           try { google.script.run.savePauseLog(pauseEntry); } catch(e) {}
         }
@@ -1987,6 +2200,7 @@ body {
         if (!badges.includes(badgeId)) {
           badges.push(badgeId);
           localStorage.setItem(STORAGE_KEYS.UNLOCKED_BADGES, JSON.stringify(badges));
+          IndexedDBEngine.put(IDB_STORES.badges, badges);
           if (this.isGoogleAppsScript()) {
             try { google.script.run.saveUnlockedBadge(badgeId); } catch(e) {}
           }
@@ -2001,6 +2215,7 @@ body {
       },
       saveUserMedsLocally(medsList) {
         localStorage.setItem(STORAGE_KEYS.USER_MEDS, JSON.stringify(medsList));
+        IndexedDBEngine.put(IDB_STORES.meds, medsList);
         return medsList;
       },
 
@@ -2013,6 +2228,7 @@ body {
       },
       saveRoutineConfigLocally(config) {
         localStorage.setItem(STORAGE_KEYS.ROUTINE_CONFIG, JSON.stringify(config));
+        IndexedDBEngine.put(IDB_STORES.routine, config);
         return config;
       },
 
@@ -2024,7 +2240,74 @@ body {
       saveBMRLocally(val) {
         const num = parseNumber(val) || 1400;
         localStorage.setItem(STORAGE_KEYS.BMR_VAL, String(num));
+        IndexedDBEngine.put(IDB_STORES.settings, { bmr: num });
         return num;
+      },
+
+      /* 2.2 INICIALIZACIÓN: FUSIONA IndexedDB <-> localStorage (fuente única de datos)
+         IndexedDB conserva los datos incluso si se borra la caché del navegador. */
+      async initSelfContainedDatabase() {
+        const statusText = document.getElementById('sheets-status-text');
+        try {
+          await IndexedDBEngine.open();
+
+          const collections = [
+            { store: IDB_STORES.fasting_logs, storageKey: STORAGE_KEYS.FASTING_LOGS, getId: it => it.id !== undefined ? String(it.id) : it },
+            { store: IDB_STORES.weight_logs, storageKey: STORAGE_KEYS.WEIGHT_LOGS, getId: it => it.id !== undefined ? String(it.id) : it },
+            { store: IDB_STORES.exercise_logs, storageKey: STORAGE_KEYS.EXERCISE_LOGS, getId: it => it.id !== undefined ? String(it.id) : it },
+            { store: IDB_STORES.pause_logs, storageKey: STORAGE_KEYS.PAUSE_LOGS, getId: it => it.id !== undefined ? String(it.id) : it },
+            { store: IDB_STORES.badges, storageKey: STORAGE_KEYS.UNLOCKED_BADGES, getId: it => it },
+            { store: IDB_STORES.meds, storageKey: STORAGE_KEYS.USER_MEDS, getId: it => it }
+          ];
+
+          for (const c of collections) {
+            let lsArr = [];
+            const lsRaw = localStorage.getItem(c.storageKey);
+            if (lsRaw) { try { lsArr = JSON.parse(lsRaw) || []; } catch(e) { lsArr = []; } }
+            if (!Array.isArray(lsArr)) lsArr = [];
+
+            const idbArr = await IndexedDBEngine.get(c.store);
+            const merged = idbArr && Array.isArray(idbArr) ? idbArr.slice() : [];
+
+            lsArr.forEach(item => {
+              const key = c.getId(item);
+              const idx = merged.findIndex(m => c.getId(m) === key);
+              if (idx !== -1) merged[idx] = item; else merged.push(item);
+            });
+            if (!merged.some(m => c.getId(m) === undefined) && merged.length > 0) {
+              localStorage.setItem(c.storageKey, JSON.stringify(merged));
+              await IndexedDBEngine.put(c.store, merged);
+            }
+          }
+
+          // Valores escalares: ayuno activo, rutina y BMR
+          const activeFromLS = localStorage.getItem(STORAGE_KEYS.ACTIVE_FAST);
+          const activeFromIDB = await IndexedDBEngine.get(IDB_STORES.active_fast);
+          const finalActive = (activeFromLS && activeFromLS !== 'null') ? JSON.parse(activeFromLS) : activeFromIDB;
+          if (finalActive) {
+            localStorage.setItem(STORAGE_KEYS.ACTIVE_FAST, JSON.stringify(finalActive));
+            await IndexedDBEngine.put(IDB_STORES.active_fast, finalActive);
+          }
+
+          const routineFromLS = localStorage.getItem(STORAGE_KEYS.ROUTINE_CONFIG);
+          const routineFromIDB = await IndexedDBEngine.get(IDB_STORES.routine);
+          const finalRoutine = (routineFromLS && routineFromLS !== 'null') ? JSON.parse(routineFromLS) : routineFromIDB;
+          if (finalRoutine) {
+            localStorage.setItem(STORAGE_KEYS.ROUTINE_CONFIG, JSON.stringify(finalRoutine));
+            await IndexedDBEngine.put(IDB_STORES.routine, finalRoutine);
+          }
+
+          const settingsFromIDB = await IndexedDBEngine.get(IDB_STORES.settings);
+          const bmrLS = parseNumber(localStorage.getItem(STORAGE_KEYS.BMR_VAL));
+          const finalBmr = bmrLS !== null ? bmrLS : (settingsFromIDB && settingsFromIDB.bmr ? settingsFromIDB.bmr : 1400);
+          localStorage.setItem(STORAGE_KEYS.BMR_VAL, String(finalBmr));
+          await IndexedDBEngine.put(IDB_STORES.settings, { bmr: finalBmr });
+
+          if (statusText) statusText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
+        } catch (e) {
+          console.warn('IndexedDB no disponible, usando localStorage:', e);
+          if (statusText) statusText.textContent = '🟢 Almacenamiento Local en Dispositivo';
+        }
       }
     };
 
@@ -2167,7 +2450,7 @@ body {
       renderMedsView();
       renderWeightView();
       runTensorFlowAiAgentAuto();
-      showToast('💾 Configuración y fármacos guardados en nube y dispositivo.');
+      showToast('💾 Configuración y fármacos guardados en tu base de datos local.');
     };
 
     window.openWeightModal = function() {
@@ -2434,17 +2717,17 @@ body {
       const bannerLink = document.getElementById('sheets-link-container');
 
       if (!DataAdapter.isGoogleAppsScript()) {
-        if (bannerText) bannerText.textContent = '🟢 Datos Sincronizados en Dispositivo';
+        if (bannerText) bannerText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
         return;
       }
 
-      if (bannerText) bannerText.textContent = '📊 Sincronizando datos con Google Sheets...';
+      if (bannerText) bannerText.textContent = '🗄️ Sincronizando base de datos local...';
 
       let responded = false;
       const timeoutTimer = setTimeout(() => {
         if (!responded) {
           responded = true;
-          if (bannerText) bannerText.textContent = '🟢 Sincronizado en Dispositivo';
+          if (bannerText) bannerText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
         }
       }, 5000);
 
@@ -2519,7 +2802,7 @@ body {
           })
           .getInitialAppData();
       } catch(e) {
-        if (bannerText) bannerText.textContent = '🟢 Datos Sincronizados en Dispositivo';
+        if (bannerText) bannerText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
       }
     }
 
@@ -2679,6 +2962,9 @@ body {
       try {
         renderVersionInfo();
         initCanvasConfetti();
+
+        // Cargar la base de datos autocontenida (IndexedDB <-> localStorage)
+        await DataAdapter.initSelfContainedDatabase();
 
         appState.activeFast = DataAdapter.getLocalActiveFast();
         appState.fastingLogs = DataAdapter.getLocalFastingLogs() || [];
@@ -3833,6 +4119,29 @@ body {
         };
         let badgeToUnlock = stepCount >= 6000 ? 'huawei_steps_6k' : null;
         saveAndProcessExercise(entry, badgeToUnlock, `⌚ ${stepCount.toLocaleString()} pasos sincronizados automáticamente.`);
+      }
+    };
+
+    /* 9. REGISTRO DEL SERVICE WORKER (PWA INSTALABLE + FUNCIONAMIENTO OFFLINE) */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .catch(err => console.warn('Service Worker no disponible:', err));
+      });
+    }
+
+    /* 10. BOTÓN DE INSTALACIÓN PWA (se muestra cuando el navegador lo permite) */
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      const btn = document.getElementById('btn-install-app');
+      if (btn) btn.style.display = 'inline-flex';
+    });
+    window.installPwa = function() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
       }
     };
   </script>

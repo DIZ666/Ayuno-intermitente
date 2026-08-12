@@ -1,0 +1,33 @@
+{
+  "name": "Ayuno Intermitente 16:8 - Control & Meta 82 Kg",
+  "short_name": "Ayuno 16:8",
+  "description": "Cronómetro de ayuno intermitente 16:8, seguimiento metabólico, control de peso hacia los 82 kg, ejercicio, pasos y Agente IA. App instalable y offline.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#050b18",
+  "theme_color": "#050b18",
+  "categories": ["health", "fitness", "lifestyle"],
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

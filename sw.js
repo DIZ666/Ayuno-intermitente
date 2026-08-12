@@ -1,5 +1,5 @@
 /* Service Worker - Ayuno Intermitente 16:8 (PWA instalable + offline) */
-const CACHE_VERSION = 'ayuno168-v6.3.0';
+const CACHE_VERSION = 'ayuno168-v6.3.1';
 const APP_SHELL = CACHE_VERSION + '-shell';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 

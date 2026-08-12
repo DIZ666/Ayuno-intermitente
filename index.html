@@ -384,7 +384,7 @@ body {
   stroke-dasharray: 754;
   stroke-dashoffset: 754;
   transition: stroke-dashoffset 1s linear;
-  filter: drop-shadow(0 0 8px var(--blue-glow));
+  filter: drop-shadow(0 0 5px var(--blue-glow));
 }
 
 .timer-display {
@@ -1292,7 +1292,7 @@ body {
       <div class="user-badge">
         <div class="avatar-ring">⚡</div>
         <div class="user-info">
-          <h2>Ayuno Intermitente <button class="version-tag" id="app-version-header" onclick="openChangelogModal()" title="Ver novedades de esta versión" style="cursor: pointer; position: relative; top: -1px;">v6.3.0</button> <span id="btn-version-new-badge" class="version-tag" style="display: none; background: rgba(255, 183, 3, 0.2); color: #ffb703; border-color: rgba(255, 183, 3, 0.4);">🆕 Nuevo</span></h2>
+          <h2>Ayuno Intermitente <button class="version-tag" id="app-version-header" onclick="openChangelogModal()" title="Ver novedades de esta versión" style="cursor: pointer; position: relative; top: -1px;">v6.3.1</button> <span id="btn-version-new-badge" class="version-tag" style="display: none; background: rgba(255, 183, 3, 0.2); color: #ffb703; border-color: rgba(255, 183, 3, 0.4);">🆕 Nuevo</span></h2>
           <p><span id="header-user-status">Modelo Base 16:8</span> • <span id="header-current-weight">-- kg</span></p>
         </div>
       </div>
@@ -1739,7 +1739,7 @@ body {
     </section>
 
     <footer class="app-footer">
-      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.3.0</span> • Base de Datos Local Autocontenida
+      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.3.1</span> • Base de Datos Local Autocontenida
     </footer>
 
   </div> <!-- /#app-container -->
@@ -1841,7 +1841,15 @@ body {
       <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Registro de cambios del software.</p>
       <div style="max-height: 55vh; overflow-y: auto; margin-top: 14px;">
         <div style="margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-          <div style="color: var(--cyan-primary); font-weight: 800; font-size: 14px;">v6.3.0 — Actual</div>
+          <div style="color: var(--cyan-primary); font-weight: 800; font-size: 14px;">v6.3.1 — Actual</div>
+          <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.7; margin: 6px 0 0 0;">
+            <li>🛠️ Estabilidad visual: se eliminó el parpadeo del reloj de ayuno (solo se actualiza lo que cambia cada segundo).</li>
+            <li>📲 El botón "Instalar" ya no desordena el encabezado (ahora es un banner discreto).</li>
+            <li>⚡ Carga inicial más rápida (TensorFlow.js ya no bloquea el render).</li>
+          </ul>
+        </div>
+        <div style="margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+          <div style="color: #fff; font-weight: 800; font-size: 14px;">v6.3.0</div>
           <ul style="font-size: 12px; color: var(--text-secondary); padding-left: 18px; line-height: 1.7; margin: 6px 0 0 0;">
             <li>🔔 Recordatorios y notificaciones (fin de ayuno y hora de rutina).</li>
             <li>📤 Backup y restauración de todos tus datos (exportar/importar JSON).</li>
@@ -2068,7 +2076,7 @@ body {
        SCRIPTS JAVASCRIPT v4.0.0 MULTI-DEVICE REAL-TIME SYNC
        ==================================================================== -->
   <script>
-    const APP_VERSION = 'v6.3.0';
+    const APP_VERSION = 'v6.3.1';
 
     function parseNumber(val) {
       if (val === null || val === undefined || val === '') return null;
@@ -2431,7 +2439,7 @@ body {
         return {
           app: 'Ayuno Intermitente 16:8',
           exportedAt: new Date().toISOString(),
-          version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v6.3.0',
+          version: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'v6.3.1',
           data: {
             activeFast: this.getLocalActiveFast(),
             fastingLogs: this.getLocalFastingLogs(),
@@ -3457,6 +3465,22 @@ body {
       appState.timerInterval = setInterval(updateTimerUI, 1000);
     }
 
+    let _tuiCache = {};
+    function tuiSet(el, key, prop, value) {
+      if (!el) return;
+      const ck = key + '|' + prop;
+      if (_tuiCache[ck] === value) return;
+      _tuiCache[ck] = value;
+      switch (prop) {
+        case 'text': el.textContent = value; break;
+        case 'class': el.className = value; break;
+        case 'display': el.style.display = value; break;
+        case 'color': el.style.color = value; break;
+        case 'background': el.style.background = value; break;
+        case 'dash': el.style.strokeDashoffset = value; break;
+      }
+    }
+
     function updateTimerUI() {
       const ring = document.getElementById('timer-progress-ring');
       const display = document.getElementById('timer-time-display');
@@ -3470,38 +3494,31 @@ body {
       const targetDisp = document.getElementById('fast-target-display');
       const adaptiveTag = document.getElementById('adaptive-model-display');
 
-      const p1 = document.getElementById('pill-phase-1');
-      const p2 = document.getElementById('pill-phase-2');
-      const p3 = document.getElementById('pill-phase-3');
-      const p4 = document.getElementById('pill-phase-4');
-      const p5 = document.getElementById('pill-phase-5');
-      const pills = [p1, p2, p3, p4, p5];
+      const pills = ['pill-phase-1', 'pill-phase-2', 'pill-phase-3', 'pill-phase-4', 'pill-phase-5'].map(id => document.getElementById(id));
 
       if (!appState.activeFast) {
-        if (ring) ring.style.strokeDashoffset = '754';
-        if (display) display.textContent = '16:00:00';
-        if (badge) {
-          badge.textContent = 'EN VENTANA DE ALIMENTACIÓN';
-          badge.style.color = 'var(--text-secondary)';
-          badge.style.background = 'rgba(255, 255, 255, 0.1)';
-        }
-        if (subtext) subtext.textContent = 'Listo para iniciar tu próximo ayuno 16:8';
-        if (btn) { btn.textContent = '⚡ Iniciar Ayuno 16:8'; btn.className = 'btn-primary'; }
-        if (stageCard) stageCard.style.display = 'none';
-        if (countdownElem) countdownElem.textContent = 'Presiona "Iniciar Ayuno 16:8" al comenzar tu ventana sin comida.';
-        if (startDisp) startDisp.textContent = '--:--';
-        if (targetDisp) targetDisp.textContent = '--:--';
-        if (adaptiveTag) adaptiveTag.textContent = 'Modelo Base: 16:8 (Eficacia Científica)';
-
-        pills.forEach(p => { if (p) p.className = 'phase-step-pill'; });
+        tuiSet(ring, 'ring', 'dash', '754');
+        tuiSet(display, 'display', 'text', '16:00:00');
+        tuiSet(badge, 'badge', 'text', 'EN VENTANA DE ALIMENTACIÓN');
+        tuiSet(badge, 'badge', 'color', 'var(--text-secondary)');
+        tuiSet(badge, 'badge', 'background', 'rgba(255, 255, 255, 0.1)');
+        tuiSet(subtext, 'subtext', 'text', 'Listo para iniciar tu próximo ayuno 16:8');
+        tuiSet(btn, 'btn', 'text', '⚡ Iniciar Ayuno 16:8');
+        tuiSet(btn, 'btn', 'class', 'btn-primary');
+        tuiSet(stageCard, 'stageCard', 'display', 'none');
+        tuiSet(countdownElem, 'countdown', 'text', 'Presiona "Iniciar Ayuno 16:8" al comenzar tu ventana sin comida.');
+        tuiSet(startDisp, 'start', 'text', '--:--');
+        tuiSet(targetDisp, 'target', 'text', '--:--');
+        tuiSet(adaptiveTag, 'adaptive', 'text', 'Modelo Base: 16:8 (Eficacia Científica)');
+        pills.forEach((p, idx) => tuiSet(p, 'pill' + idx, 'class', 'phase-step-pill'));
         return;
       }
 
       const startDate = new Date(appState.activeFast.startTime);
       const targetDate = new Date(startDate.getTime() + 16 * 3600 * 1000);
 
-      if (startDisp) startDisp.textContent = formatTimeHM(startDate);
-      if (targetDisp) targetDisp.textContent = formatTimeHM(targetDate);
+      tuiSet(startDisp, 'start', 'text', formatTimeHM(startDate));
+      tuiSet(targetDisp, 'target', 'text', formatTimeHM(targetDate));
 
       const elapsedMs = new Date() - startDate;
       const elapsedSeconds = Math.floor(elapsedMs / 1000);
@@ -3509,7 +3526,7 @@ body {
       const targetSeconds = 16 * 3600;
 
       const progressRatio = Math.min(1, elapsedSeconds / targetSeconds);
-      if (ring) ring.style.strokeDashoffset = (754 - (754 * progressRatio)).toString();
+      tuiSet(ring, 'ring', 'dash', (754 - (754 * progressRatio)).toString());
 
       const remainingSeconds = Math.max(0, targetSeconds - elapsedSeconds);
       const hStr = String(Math.floor(remainingSeconds / 3600)).padStart(2, '0');
@@ -3517,55 +3534,53 @@ body {
       const sStr = String(remainingSeconds % 60).padStart(2, '0');
 
       // Modelo Adaptativo Dinámico
-      if (adaptiveTag) {
-        if (elapsedHours < 12) {
-          adaptiveTag.textContent = `Ayuno 16:8 Base (En proceso: ${elapsedHours.toFixed(1)}h)`;
-        } else if (elapsedHours >= 12 && elapsedHours < 14) {
-          adaptiveTag.textContent = '✨ Adaptado: Modelo 12:12 Alcanzado';
-        } else if (elapsedHours >= 14 && elapsedHours < 16) {
-          adaptiveTag.textContent = '✨ Adaptado: Modelo 14:10 Alcanzado';
-        } else if (elapsedHours >= 16 && elapsedHours < 18) {
-          adaptiveTag.textContent = '🏆 ¡Modelo 16:8 Base Completado!';
-        } else if (elapsedHours >= 18 && elapsedHours < 20) {
-          adaptiveTag.textContent = '🚀 Adaptado: Modelo 18:6 (Autofagia Avanzada)';
-        } else {
-          adaptiveTag.textContent = '🔥 Adaptado: Modelo 20:4 / OMAD';
-        }
+      let adaptiveText = 'Modelo Base: 16:8 (Eficacia Científica)';
+      if (elapsedHours < 12) {
+        adaptiveText = `Ayuno 16:8 Base (En proceso: ${elapsedHours.toFixed(1)}h)`;
+      } else if (elapsedHours >= 12 && elapsedHours < 14) {
+        adaptiveText = '✨ Adaptado: Modelo 12:12 Alcanzado';
+      } else if (elapsedHours >= 14 && elapsedHours < 16) {
+        adaptiveText = '✨ Adaptado: Modelo 14:10 Alcanzado';
+      } else if (elapsedHours >= 16 && elapsedHours < 18) {
+        adaptiveText = '🏆 ¡Modelo 16:8 Base Completado!';
+      } else if (elapsedHours >= 18 && elapsedHours < 20) {
+        adaptiveText = '🚀 Adaptado: Modelo 18:6 (Autofagia Avanzada)';
+      } else {
+        adaptiveText = '🔥 Adaptado: Modelo 20:4 / OMAD';
       }
+      tuiSet(adaptiveTag, 'adaptive', 'text', adaptiveText);
 
       if (elapsedSeconds >= targetSeconds) {
-        if (badge) {
-          badge.textContent = '¡AYUNO 16:8 COMPLETADO!';
-          badge.style.color = 'var(--cyan-primary)';
-          badge.style.background = 'rgba(0, 245, 212, 0.2)';
-        }
-        if (display) display.textContent = `+${Math.floor(elapsedHours - 16)}h extras`;
-        if (subtext) subtext.textContent = '¡Fabuloso! Puedes finalizar el ayuno cuando gustes.';
-        if (countdownElem) countdownElem.textContent = '✨ ¡Has alcanzado el hito de eficacia científica 16:8!';
+        tuiSet(badge, 'badge', 'text', '¡AYUNO 16:8 COMPLETADO!');
+        tuiSet(badge, 'badge', 'color', 'var(--cyan-primary)');
+        tuiSet(badge, 'badge', 'background', 'rgba(0, 245, 212, 0.2)');
+        tuiSet(display, 'display', 'text', `+${Math.floor(elapsedHours - 16)}h extras`);
+        tuiSet(subtext, 'subtext', 'text', '¡Fabuloso! Puedes finalizar el ayuno cuando gustes.');
+        tuiSet(countdownElem, 'countdown', 'text', '✨ ¡Has alcanzado el hito de eficacia científica 16:8!');
       } else {
-        if (badge) {
-          badge.textContent = 'AYUNANDO (MODELO 16:8)';
-          badge.style.color = 'var(--cyan-primary)';
-          badge.style.background = 'rgba(0, 245, 212, 0.15)';
-        }
-        if (display) display.textContent = `${hStr}:${mStr}:${sStr}`;
-        if (subtext) subtext.textContent = `Transcurrido: ${Math.floor(elapsedHours)}h ${Math.floor((elapsedSeconds % 3600)/60)}m`;
+        tuiSet(badge, 'badge', 'text', 'AYUNANDO (MODELO 16:8)');
+        tuiSet(badge, 'badge', 'color', 'var(--cyan-primary)');
+        tuiSet(badge, 'badge', 'background', 'rgba(0, 245, 212, 0.15)');
+        tuiSet(display, 'display', 'text', `${hStr}:${mStr}:${sStr}`);
+        tuiSet(subtext, 'subtext', 'text', `Transcurrido: ${Math.floor(elapsedHours)}h ${Math.floor((elapsedSeconds % 3600)/60)}m`);
 
+        let countdownText;
         if (elapsedHours < 4) {
           const remSecs = Math.floor((4 - elapsedHours) * 3600);
-          countdownElem.textContent = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m entras a la Caída de Insulina (4-8h)`;
+          countdownText = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m entras a la Caída de Insulina (4-8h)`;
         } else if (elapsedHours < 8) {
           const remSecs = Math.floor((8 - elapsedHours) * 3600);
-          countdownElem.textContent = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m activas la Quema de Grasa (8-12h)`;
+          countdownText = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m activas la Quema de Grasa (8-12h)`;
         } else if (elapsedHours < 12) {
           const remSecs = Math.floor((12 - elapsedHours) * 3600);
-          countdownElem.textContent = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m alcanzas el Modelo 12:12`;
+          countdownText = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m alcanzas el Modelo 12:12`;
         } else if (elapsedHours < 16) {
           const remSecs = Math.floor((16 - elapsedHours) * 3600);
-          countdownElem.textContent = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m completas la Meta 16:8 ✨`;
+          countdownText = `⏳ En ${Math.floor(remSecs/3600)}h ${Math.floor((remSecs%3600)/60)}m completas la Meta 16:8 ✨`;
         } else {
-          countdownElem.textContent = `✨ ¡Pico de Cetosis alcanzado!`;
+          countdownText = '✨ ¡Pico de Cetosis alcanzado!';
         }
+        tuiSet(countdownElem, 'countdown', 'text', countdownText);
       }
 
       pills.forEach((p, idx) => {
@@ -3573,24 +3588,24 @@ body {
         const limits = [4, 8, 12, 16, 18];
         const prevLimit = idx === 0 ? 0 : limits[idx - 1];
         const nextLimit = limits[idx];
-
-        if (elapsedHours >= nextLimit) {
-          p.className = 'phase-step-pill completed';
-        } else if (elapsedHours >= prevLimit && elapsedHours < nextLimit) {
-          p.className = 'phase-step-pill active';
-        } else {
-          p.className = 'phase-step-pill';
-        }
+        let cls = 'phase-step-pill';
+        if (elapsedHours >= nextLimit) cls = 'phase-step-pill completed';
+        else if (elapsedHours >= prevLimit && elapsedHours < nextLimit) cls = 'phase-step-pill active';
+        tuiSet(p, 'pill' + idx, 'class', cls);
       });
 
-      if (btn) { btn.textContent = '⏹ Finalizar Ayuno'; btn.className = 'btn-primary btn-danger'; }
+      tuiSet(btn, 'btn', 'text', '⏹ Finalizar Ayuno');
+      tuiSet(btn, 'btn', 'class', 'btn-primary btn-danger');
 
       const stage = getFastingStageByHours(elapsedHours);
       if (stageCard && stage) {
-        stageCard.style.display = 'block';
-        document.getElementById('summary-stage-icon').textContent = stage.icon;
-        document.getElementById('summary-stage-title').textContent = stage.title;
-        document.getElementById('summary-stage-desc').textContent = stage.shortDesc;
+        tuiSet(stageCard, 'stageCard', 'display', 'block');
+        const sIcon = document.getElementById('summary-stage-icon');
+        const sTitle = document.getElementById('summary-stage-title');
+        const sDesc = document.getElementById('summary-stage-desc');
+        tuiSet(sIcon, 'sIcon', 'text', stage.icon);
+        tuiSet(sTitle, 'sTitle', 'text', stage.title);
+        tuiSet(sDesc, 'sDesc', 'text', stage.shortDesc);
       }
     }
 

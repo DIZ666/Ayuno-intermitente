@@ -1372,7 +1372,7 @@ body {
     <section id="view-weight" class="view-section">
       <div class="glass-card weight-hero">
         <h3 style="font-size: 18px; font-weight: 700;">⚖️ Control de Peso</h3>
-        <p style="font-size: 13px; color: var(--text-secondary);">Camino hacia tu meta saludable de 82 kg (Máx. 1 peso/día)</p>
+        <p style="font-size: 13px; color: var(--text-secondary);"><span id="weight-meta-text">Camino hacia tu meta saludable de 82 kg</span> (Máx. 1 peso/día)</p>
 
         <div class="weight-progress-box">
           <div class="weight-numbers">
@@ -1453,7 +1453,7 @@ body {
     <section id="view-badges" class="view-section">
       <div class="glass-card">
         <h3 style="font-size: 18px; font-weight: 700;">🏆 Recompensas & Logros</h3>
-        <p style="font-size: 13px; color: var(--text-secondary);">Gana medallas cumpliendo tus ayunos 16:8 y bajando hacia los 82 kg.</p>
+        <p style="font-size: 13px; color: var(--text-secondary);"><span id="badges-meta-text">Gana medallas cumpliendo tus ayunos 16:8 y bajando hacia los 82 kg.</span></p>
 
         <div id="badges-grid-container" class="badges-grid">
           <!-- Insignias -->
@@ -1728,7 +1728,7 @@ body {
   <div id="modal-config" class="modal-overlay">
     <div class="modal-card">
       <h3 style="font-size: 20px; font-weight: 700; color: #fff;">⚙️ Configuración del Perfil</h3>
-      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Configura tu edad, metabolismo basal (BMR) y tus suplementos o medicamentos metabólicos.</p>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Configura tu edad, peso objetivo, metabolismo basal (BMR) y tus suplementos o medicamentos metabólicos.</p>
 
       <div class="form-group" style="margin-top: 15px;">
         <label for="input-user-meds">💊 Medicamentos / Suplementos Metabólicos (opcional):</label>
@@ -1746,6 +1746,12 @@ body {
         <label for="input-user-age">🎂 Edad (años):</label>
         <input type="number" id="input-user-age" class="form-input" placeholder="35" min="18" max="90">
         <span style="font-size: 11px; color: var(--text-secondary);">El Agente IA ajusta tus sugerencias calóricas según tu edad.</span>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label for="input-target-weight">🎯 Peso Objetivo (kg):</label>
+        <input type="number" id="input-target-weight" class="form-input" placeholder="82" min="40" max="200" step="0.1">
+        <span style="font-size: 11px; color: var(--text-secondary);">Meta de peso que usa el Agente IA, los gráficos y las insignias.</span>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
@@ -2020,7 +2026,8 @@ body {
       EXERCISE_LOGS: 'fasting_app_exercise', PAUSE_LOGS: 'fasting_app_pauses',
       ACTIVE_FAST: 'fasting_app_active', UNLOCKED_BADGES: 'fasting_app_badges',
       USER_MEDS: 'fasting_app_meds', ROUTINE_CONFIG: 'fasting_app_routine_config',
-      BMR_VAL: 'fasting_app_bmr', AGE_VAL: 'fasting_app_age'
+      BMR_VAL: 'fasting_app_bmr', AGE_VAL: 'fasting_app_age',
+      TARGET_WEIGHT: 'fasting_app_target_weight'
     };
 
     /* 2.1 BASE DE DATOS AUTOCONTENIDA (INDEXEDDB) PARA FUNCIONAR EN GITHUB PAGES / PWA
@@ -2274,6 +2281,19 @@ body {
         });
         return num;
       },
+      getLocalTargetWeight() {
+        const data = localStorage.getItem(STORAGE_KEYS.TARGET_WEIGHT);
+        const num = parseNumber(data);
+        return num !== null ? num : 82;
+      },
+      saveTargetWeightLocally(val) {
+        const num = parseNumber(val) || 82;
+        localStorage.setItem(STORAGE_KEYS.TARGET_WEIGHT, String(num));
+        IndexedDBEngine.get(IDB_STORES.settings).then(existing => {
+          IndexedDBEngine.put(IDB_STORES.settings, Object.assign({}, existing || {}, { targetWeight: num }));
+        });
+        return num;
+      },
 
       /* 2.2 INICIALIZACIÓN: FUSIONA IndexedDB <-> localStorage (fuente única de datos)
          IndexedDB conserva los datos incluso si se borra la caché del navegador. */
@@ -2337,7 +2357,11 @@ body {
           const ageLS = parseNumber(localStorage.getItem(STORAGE_KEYS.AGE_VAL));
           const finalAge = ageLS !== null ? ageLS : (settingsFromIDB && settingsFromIDB.age ? settingsFromIDB.age : 35);
           localStorage.setItem(STORAGE_KEYS.AGE_VAL, String(finalAge));
-          await IndexedDBEngine.put(IDB_STORES.settings, { bmr: finalBmr, age: finalAge });
+
+          const twLS = parseNumber(localStorage.getItem(STORAGE_KEYS.TARGET_WEIGHT));
+          const finalTw = twLS !== null ? twLS : (settingsFromIDB && settingsFromIDB.targetWeight ? settingsFromIDB.targetWeight : 82);
+          localStorage.setItem(STORAGE_KEYS.TARGET_WEIGHT, String(finalTw));
+          await IndexedDBEngine.put(IDB_STORES.settings, { bmr: finalBmr, age: finalAge, targetWeight: finalTw });
 
           if (statusText) statusText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
         } catch (e) {
@@ -2365,8 +2389,17 @@ body {
       { id: 'metabolic_synergy', icon: '⚡', name: 'Sinergia Metabólica', desc: 'Combinaste Ayuno 16:8, ejercicio y optimización metabólica.' }
     ];
 
+    function getBadgeDisplayText(badge) {
+      const tw = (appState.targetWeight || DataAdapter.getLocalTargetWeight());
+      const twLabel = `${tw.toFixed(1)} kg`;
+      return {
+        name: badge.name.replace(/82\s*KG/g, twLabel.toUpperCase()).replace(/82\s*kg/g, twLabel),
+        desc: badge.desc.replace(/82\s*kg/g, twLabel)
+      };
+    }
+
     let appState = {
-      activeFast: null, fastingLogs: [], weightLogs: [], exerciseLogs: [], pauseLogs: [], unlockedBadges: [], userMeds: [], routineConfig: null, bmr: 1400, age: 35, timerInterval: null
+      activeFast: null, fastingLogs: [], weightLogs: [], exerciseLogs: [], pauseLogs: [], unlockedBadges: [], userMeds: [], routineConfig: null, bmr: 1400, age: 35, targetWeight: 82, timerInterval: null
     };
 
     window.openRoutineModal = function() {
@@ -2463,9 +2496,11 @@ body {
       const inputMeds = document.getElementById('input-user-meds');
       const inputBmr = document.getElementById('input-user-bmr');
       const inputAge = document.getElementById('input-user-age');
+      const inputTw = document.getElementById('input-target-weight');
 
       if (!appState.bmr) appState.bmr = DataAdapter.getLocalBMR();
       if (!appState.age) appState.age = DataAdapter.getLocalAge();
+      if (!appState.targetWeight) appState.targetWeight = DataAdapter.getLocalTargetWeight();
 
       if (inputMeds && appState.userMeds) {
         inputMeds.value = appState.userMeds.join(', ');
@@ -2475,6 +2510,9 @@ body {
       }
       if (inputAge) {
         inputAge.value = appState.age || 35;
+      }
+      if (inputTw) {
+        inputTw.value = appState.targetWeight || 82;
       }
       if (modal) modal.classList.add('active');
     };
@@ -2505,6 +2543,10 @@ body {
       if (inputAge) {
         const val = parseNumber(inputAge.value);
         appState.age = DataAdapter.saveAgeLocally(val !== null ? val : 35);
+      }
+      if (inputTw) {
+        const val = parseNumber(inputTw.value);
+        appState.targetWeight = DataAdapter.saveTargetWeightLocally(val !== null ? val : 82);
       }
       closeConfigModal();
       renderMedsView();
@@ -2688,13 +2730,14 @@ body {
       const initial = appState.weightLogs[appState.weightLogs.length - 1].weight;
       if (initial - val >= 1) checkAndUnlockBadge('loss_1kg');
 
-      if (val <= 82.0) {
+      const goalW = appState.targetWeight || DataAdapter.getLocalTargetWeight();
+      if (val <= goalW) {
         checkAndUnlockBadge('goal_82kg');
         triggerConfetti();
         playSuccessChime();
         playVolcanoAlertSound();
         triggerVolcanoGlow();
-        showRewardModal('👑 ¡META DE 82 KG ALCANZADA!', '¡Felicidades increibles! Has logrado tu peso objetivo de 82 kg.');
+        showRewardModal(`👑 ¡META DE ${goalW.toFixed(1)} KG ALCANZADA!`, `¡Felicidades increibles! Has logrado tu peso objetivo de ${goalW.toFixed(1)} kg.`);
       }
 
       if (DataAdapter.isGoogleAppsScript()) {
@@ -2852,6 +2895,11 @@ body {
                 localStorage.setItem(STORAGE_KEYS.AGE_VAL, String(appState.age));
               }
 
+              if (res.targetWeight) {
+                appState.targetWeight = parseNumber(res.targetWeight) || 82;
+                localStorage.setItem(STORAGE_KEYS.TARGET_WEIGHT, String(appState.targetWeight));
+              }
+
               renderProfileHeader();
               renderWeightView();
               renderBadgesView();
@@ -2921,7 +2969,7 @@ body {
       const statusBadge = document.getElementById('ai-model-status');
       const weights = appState.weightLogs;
       const exLogs = appState.exerciseLogs || [];
-      const targetWeight = 82.0;
+      const targetWeight = appState.targetWeight || DataAdapter.getLocalTargetWeight();
 
       const todayKey = getDayKey(new Date());
       const todayStepsLog = exLogs.find(e => getDayKey(e.date) === todayKey && e.steps > 0);
@@ -2948,11 +2996,11 @@ body {
 
       if (quoteElem) {
         if (currentWeight <= targetWeight) {
-          quoteElem.textContent = "🎉 ¡LOGRO HISTÓRICO! Has alcanzado y superado tu meta de 82.0 kg. El Agente IA felicita tu disciplina.";
+          quoteElem.textContent = `🎉 ¡LOGRO HISTÓRICO! Has alcanzado y superado tu meta de ${targetWeight.toFixed(1)} kg. El Agente IA felicita tu disciplina.`;
         } else if (kgRemaining <= 3) {
           quoteElem.textContent = `«¡A solo ${kgRemaining.toFixed(1)} kg de tu meta! La victoria está asegurada con tu disciplina y rutina diaria.»`;
         } else {
-          quoteElem.textContent = `«Restan ${kgRemaining.toFixed(1)} kg para los 82.0 kg. Tu Ayuno 16:8 y ejercicio constante maximizan tu salud metabólica.»`;
+          quoteElem.textContent = `«Restan ${kgRemaining.toFixed(1)} kg para los ${targetWeight.toFixed(1)} kg. Tu Ayuno 16:8 y ejercicio constante maximizan tu salud metabólica.»`;
         }
       }
 
@@ -2991,7 +3039,7 @@ body {
             const daysToGoal = Math.ceil(kgRemaining / Math.abs(dailyRate));
             const estimatedDate = new Date(Date.now() + daysToGoal * 24 * 3600 * 1000);
             const dateFormatted = estimatedDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-            tfPredictionHtml = `• Ritmo metabólico proyectado: <strong>${Math.abs(dailyRate * 7).toFixed(2)} kg / semana</strong>.<br>• Fecha estimada meta 82.0 kg: <strong>${dateFormatted}</strong> (~${daysToGoal} días).<br>`;
+            tfPredictionHtml = `• Ritmo metabólico proyectado: <strong>${Math.abs(dailyRate * 7).toFixed(2)} kg / semana</strong>.<br>• Fecha estimada meta ${targetWeight.toFixed(1)} kg: <strong>${dateFormatted}</strong> (~${daysToGoal} días).<br>`;
           }
         } catch (err) {}
       }
@@ -3010,7 +3058,7 @@ body {
 
         box.innerHTML = `
           <strong>🤖 ANÁLISIS DE SINERGIA BIOLÓGICA (Red Neuronal 16:8):</strong><br>
-          • <strong>Meta 82.0 kg:</strong> Faltan <strong>${kgRemaining.toFixed(1)} kg</strong>.<br>
+          • <strong>Meta ${targetWeight.toFixed(1)} kg:</strong> Faltan <strong>${kgRemaining.toFixed(1)} kg</strong>.<br>
           • <strong>Sugerencia Calórica Diaria:</strong> Consumir entre <strong>${lowSugg.toLocaleString()} y ${highSugg.toLocaleString()} kcal/día</strong> en tu ventana de alimentación (BMR ajustado a ${age} años: ${adjBmr.toLocaleString()} kcal/día).<br>
           ${tfPredictionHtml}
           ${medsText}
@@ -3044,6 +3092,7 @@ body {
         appState.routineConfig = DataAdapter.getLocalRoutineConfig();
         appState.bmr = DataAdapter.getLocalBMR();
         appState.age = DataAdapter.getLocalAge();
+        appState.targetWeight = DataAdapter.getLocalTargetWeight();
 
         try { renderProfileHeader(); } catch(e) { console.error('Header err:', e); }
         try { renderWeightView(); } catch(e) { console.error('Weight err:', e); }
@@ -3239,7 +3288,7 @@ body {
     }
 
     function renderWeightView() {
-      const targetWeight = 82.0;
+      const targetWeight = appState.targetWeight || DataAdapter.getLocalTargetWeight();
       const logs = appState.weightLogs;
 
       const latestElem = document.getElementById('weight-latest-val');
@@ -3276,6 +3325,8 @@ body {
       if (calSuggDisp) calSuggDisp.textContent = `${lowSugg.toLocaleString()} - ${highSugg.toLocaleString()} kcal`;
 
       if (targetElem) targetElem.textContent = `${targetWeight.toFixed(1)} kg`;
+      const weightMetaText = document.getElementById('weight-meta-text');
+      if (weightMetaText) weightMetaText.textContent = `Camino hacia tu meta saludable de ${targetWeight.toFixed(1)} kg`;
 
       if (logs.length === 0) {
         if (latestElem) latestElem.textContent = '-- kg';
@@ -3327,14 +3378,17 @@ body {
       const container = document.getElementById('badges-grid-container');
       if (!container) return;
       const unlocked = appState.unlockedBadges;
+      const metaText = document.getElementById('badges-meta-text');
+      if (metaText) metaText.textContent = `Gana medallas cumpliendo tus ayunos 16:8 y bajando hacia los ${(appState.targetWeight || 82)} kg.`;
 
       container.innerHTML = BADGES.map(badge => {
         const isUnlocked = unlocked.includes(badge.id);
+        const display = getBadgeDisplayText(badge);
         return `
           <div class="badge-card ${isUnlocked ? 'unlocked' : ''}">
             <div class="badge-icon">${badge.icon}</div>
-            <div class="badge-name">${badge.name}</div>
-            <div class="badge-desc">${badge.desc}</div>
+            <div class="badge-name">${display.name}</div>
+            <div class="badge-desc">${display.desc}</div>
           </div>
         `;
       }).join('');
@@ -3375,7 +3429,7 @@ body {
         • <strong>Historial de Ayunos:</strong> ${fastingCount} ciclos completados (~${totalHoursFasted.toFixed(0)} horas totales en ayuno).<br>
         • <strong>Entrenamientos Registrados:</strong> ${exCount} sesiones deportivas activas.<br>
         ${medsInfo}
-        • <strong>Insignias Desbloqueadas:</strong> ${unlockedCount} de ${BADGES.length} medallas alcanzadas. ¡Sigue adelante hacia los 82.0 kg!
+        • <strong>Insignias Desbloqueadas:</strong> ${unlockedCount} de ${BADGES.length} medallas alcanzadas. ¡Sigue adelante hacia los ${appState.targetWeight || 82} kg!
       `;
     }
 
@@ -3387,7 +3441,8 @@ body {
         if (b) {
           triggerConfetti();
           playSuccessChime();
-          showRewardModal(`🎖️ ¡Nuevo Logro: ${b.name}!`, b.desc);
+          const display = getBadgeDisplayText(b);
+          showRewardModal(`🎖️ ¡Nuevo Logro: ${display.name}!`, display.desc);
         }
       }
     }
@@ -4006,11 +4061,15 @@ body {
       const container = document.getElementById('svg-chart-weight-container');
       if (!container) return;
 
+      const targetWeight = appState.targetWeight || DataAdapter.getLocalTargetWeight();
+      const badge = document.getElementById('dash-weight-trend-badge');
+      if (badge) badge.textContent = `Tendencia Meta ${targetWeight.toFixed(1)} kg`;
+
       const logs = (appState.weightLogs || []).slice().reverse();
       let weights = logs.map(l => parseNumber(l.weight)).filter(w => w !== null);
 
       if (weights.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:40px;">Registra tu peso para generar el gráfico de tendencia hacia 82.0 kg.</p>';
+        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:40px;">Registra tu peso para generar el gráfico de tendencia hacia ${targetWeight.toFixed(1)} kg.</p>`;
         return;
       }
 
@@ -4018,8 +4077,8 @@ body {
         weights = [weights[0] + 0.5, weights[0]];
       }
 
-      const minW = Math.min(...weights, 82.0) - 1.0;
-      const maxW = Math.max(...weights, 85.0) + 1.0;
+      const minW = Math.min(...weights, targetWeight) - 1.0;
+      const maxW = Math.max(...weights, targetWeight + 3.0) + 1.0;
       const wWidth = 380, wHeight = 160, padding = 28;
 
       const pts = weights.map((w, idx) => {
@@ -4029,7 +4088,7 @@ body {
       });
 
       const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
-      const targetY = wHeight - padding - ((82.0 - minW) / (maxW - minW)) * (wHeight - 2 * padding);
+      const targetY = wHeight - padding - ((targetWeight - minW) / (maxW - minW)) * (wHeight - 2 * padding);
       const targetLine = `<line x1="${padding}" y1="${targetY.toFixed(1)}" x2="${wWidth - padding}" y2="${targetY.toFixed(1)}" stroke="#00f5d4" stroke-dasharray="4,4" stroke-width="1.5" />`;
 
       let trendlineSvg = '';
@@ -4048,7 +4107,7 @@ body {
           <path d="${linePath}" fill="none" stroke="#00b4d8" stroke-width="3" stroke-linecap="round" />
           ${trendlineSvg}
           ${circles}
-          <text x="${wWidth - padding}" y="${(targetY - 5).toFixed(1)}" fill="#00f5d4" font-size="10" font-weight="bold" text-anchor="end">Meta 82.0 kg</text>
+          <text x="${wWidth - padding}" y="${(targetY - 5).toFixed(1)}" fill="#00f5d4" font-size="10" font-weight="bold" text-anchor="end">Meta ${targetWeight.toFixed(1)} kg</text>
         </svg>
       `;
     }
@@ -4182,7 +4241,7 @@ body {
 
       box.innerHTML = `
         <strong>🤖 ANÁLISIS DEL AGENTE IA:</strong><br>
-        • <strong>Tendencia Metabólica:</strong> Regresión lineal orientada a los 82.0 kg con soporte de BMR ajustado a ${age} años (${bmr} kcal/día).<br>
+        • <strong>Tendencia Metabólica:</strong> Regresión lineal orientada a los ${appState.targetWeight || 82} kg con soporte de BMR ajustado a ${age} años (${bmr} kcal/día).<br>
         • <strong>Efectos Fisiológicos y Sinergias Verificadas (OMS / PubMed / Universidades):</strong><br>
         ${medsSynergyText}
       `;

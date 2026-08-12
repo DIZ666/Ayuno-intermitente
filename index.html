@@ -215,7 +215,6 @@ body {
   font-size: 12px;
   color: #fff;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-  margin-bottom: -8px;
 }
 .install-banner-text {
   display: flex;
@@ -239,6 +238,14 @@ body {
   border: none;
   color: var(--text-muted);
   padding: 4px 6px;
+}
+
+.header-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: -14px;
 }
 
 /* Tarjetas Estilo Glassmorphism */
@@ -362,6 +369,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 0;
+}
+
+.timer-ring-container::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 180, 216, 0.14), transparent 62%);
+  z-index: -1;
+  pointer-events: none;
 }
 
 .timer-svg {
@@ -384,7 +402,6 @@ body {
   stroke-dasharray: 754;
   stroke-dashoffset: 754;
   transition: stroke-dashoffset 1s linear;
-  filter: drop-shadow(0 0 5px var(--blue-glow));
 }
 
 .timer-display {
@@ -1278,6 +1295,45 @@ body {
   body { background: #fff !important; color: #000 !important; }
   .glass-card { background: #fff !important; border: none !important; }
 }
+
+/* MODO MÓVIL (Android/Chrome): desactiva backdrop-filter para evitar el parpadeo.
+   El vidrio se simula con fondos más opacos, bordes y sombras. */
+@media (pointer: coarse) {
+  *, *::before, *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  * {
+    transition: none !important;
+  }
+  .view-section.active {
+    animation: none !important;
+  }
+  .glass-card {
+    background: linear-gradient(160deg, rgba(20, 38, 74, 0.9), rgba(9, 20, 44, 0.94));
+  }
+  .app-header {
+    background: linear-gradient(160deg, rgba(20, 38, 74, 0.92), rgba(8, 18, 40, 0.95));
+  }
+  .ios-nav-bar {
+    background: rgba(12, 24, 50, 0.96);
+  }
+  .modal-card {
+    background: linear-gradient(165deg, rgba(18, 34, 66, 0.98), rgba(8, 18, 40, 0.99));
+  }
+  .modal-overlay {
+    background: rgba(5, 11, 24, 0.88);
+  }
+  .chart-card-container {
+    background: linear-gradient(160deg, rgba(15, 30, 58, 0.92), rgba(9, 20, 44, 0.94));
+  }
+  .sheets-status-banner, .install-banner {
+    background: rgba(13, 26, 52, 0.92);
+  }
+  .timer-ring-container::after {
+    display: none;
+  }
+}
   </style>
 </head>
 <body>
@@ -1292,12 +1348,12 @@ body {
       <div class="user-badge">
         <div class="avatar-ring">⚡</div>
         <div class="user-info">
-          <h2>Ayuno Intermitente <button class="version-tag" id="app-version-header" onclick="openChangelogModal()" title="Ver novedades de esta versión" style="cursor: pointer; position: relative; top: -1px;">v6.3.1</button> <span id="btn-version-new-badge" class="version-tag" style="display: none; background: rgba(255, 183, 3, 0.2); color: #ffb703; border-color: rgba(255, 183, 3, 0.4);">🆕 Nuevo</span></h2>
+          <h2>Ayuno Intermitente</h2>
           <p><span id="header-user-status">Modelo Base 16:8</span> • <span id="header-current-weight">-- kg</span></p>
         </div>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <button class="btn-primary btn-secondary btn-small" onclick="switchView('dashboard')" style="padding: 6px 12px; font-weight: 700; border-radius: var(--radius-full); font-size: 11px;">
+        <button class="btn-primary btn-secondary btn-small" onclick="switchView('dashboard')" style="padding: 6px 12px; font-weight: 700; border-radius: var(--radius-full); font-size: 11px; white-space: nowrap;">
           📈 Dashboard
         </button>
         <button class="target-badge" onclick="openConfigModal()" title="Configuración del Perfil Metabólico & Medicamentos">
@@ -1305,6 +1361,12 @@ body {
         </button>
       </div>
     </header>
+
+    <!-- Fila de metadatos de la app: versión y aviso de novedades -->
+    <div class="header-meta">
+      <button class="version-tag" id="app-version-header" onclick="openChangelogModal()" title="Ver novedades de esta versión" style="cursor: pointer;">v6.3.1</button>
+      <span id="btn-version-new-badge" class="version-tag" style="display: none; background: rgba(255, 183, 3, 0.2); color: #ffb703; border-color: rgba(255, 183, 3, 0.4);">🆕 Nuevo</span>
+    </div>
 
     <!-- Banner de instalación PWA (solo cuando la app NO está instalada) -->
     <div id="install-banner" class="install-banner" style="display: none;">
@@ -3315,7 +3377,6 @@ body {
           localStorage.setItem(STORAGE_KEYS.LAST_VERSION, APP_VERSION);
           const newBadge = document.getElementById('btn-version-new-badge');
           if (newBadge) newBadge.style.display = 'inline-block';
-          setTimeout(() => { openChangelogModal(); }, 900);
         }
       } catch(e) {}
     }
@@ -3825,7 +3886,7 @@ body {
       if (!toast) {
         toast = document.createElement('div');
         toast.id = 'app-toast';
-        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,180,216,0.95);backdrop-filter:blur(10px);color:#fff;padding:12px 24px;border-radius:999px;font-size:14px;font-weight:600;z-index:4000;box-shadow:0 8px 25px rgba(0,0,0,0.5);transition:all 0.3s;';
+        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,180,216,0.95);color:#fff;padding:12px 24px;border-radius:999px;font-size:14px;font-weight:600;z-index:4000;box-shadow:0 8px 25px rgba(0,0,0,0.5);transition:all 0.3s;';
         document.body.appendChild(toast);
       }
       toast.textContent = msg;
@@ -4652,9 +4713,7 @@ body {
 
     // Si el navegador no dispara beforeinstallprompt, igual mostramos el banner con instrucciones.
     if (!isStandalone) {
-      window.addEventListener('load', () => {
-        setTimeout(showInstallBanner, 1500);
-      });
+      showInstallBanner();
     }
 
     window.installPwa = function() {

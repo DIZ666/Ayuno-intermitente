@@ -13,9 +13,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Ayuno 16:8">
-  <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg">
-  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
   <!-- Fuentes Google -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1406,7 +1406,7 @@ body {
               🥗 Sugerencia Calórica del Agente IA
             </span>
             <button class="btn-primary btn-secondary btn-small" style="padding: 2px 8px; font-size: 10px;" onclick="openConfigModal()">
-              ⚙️ BMR: <span id="bmr-val-display">1400</span> kcal
+              ⚙️ BMR: <span id="bmr-val-display">1400</span> kcal · Edad: <span id="age-val-display">35</span>
             </button>
           </div>
           
@@ -1728,7 +1728,7 @@ body {
   <div id="modal-config" class="modal-overlay">
     <div class="modal-card">
       <h3 style="font-size: 20px; font-weight: 700; color: #fff;">⚙️ Configuración del Perfil</h3>
-      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Configura tu metabolismo basal (BMR) y tus suplementos o medicamentos metabólicos.</p>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Configura tu edad, metabolismo basal (BMR) y tus suplementos o medicamentos metabólicos.</p>
 
       <div class="form-group" style="margin-top: 15px;">
         <label for="input-user-meds">💊 Medicamentos / Suplementos Metabólicos (opcional):</label>
@@ -1740,6 +1740,12 @@ body {
         <label for="input-user-bmr">🔥 Metabolismo Basal en Reposo (BMR en kcal/día):</label>
         <input type="number" id="input-user-bmr" class="form-input" placeholder="1400" min="800" max="3500">
         <span style="font-size: 11px; color: var(--text-secondary);">Valor determinado por examen en reposo (ej: 1,400 kcal/día para síndrome metabólico).</span>
+      </div>
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label for="input-user-age">🎂 Edad (años):</label>
+        <input type="number" id="input-user-age" class="form-input" placeholder="35" min="18" max="90">
+        <span style="font-size: 11px; color: var(--text-secondary);">El Agente IA ajusta tus sugerencias calóricas según tu edad.</span>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
@@ -1906,6 +1912,10 @@ body {
         <button class="btn-primary btn-secondary" style="flex: 1;" onclick="closeRoutineModal()">Cancelar</button>
         <button class="btn-primary" style="flex: 1;" onclick="handleSaveRoutineConfig()">Guardar Rutina</button>
       </div>
+
+      <button class="btn-primary btn-danger btn-small" style="margin-top: 12px; width: 100%;" onclick="handleDeleteRoutine()">
+        🗑️ Eliminar esta Rutina
+      </button>
     </div>
   </div>
 
@@ -2010,7 +2020,7 @@ body {
       EXERCISE_LOGS: 'fasting_app_exercise', PAUSE_LOGS: 'fasting_app_pauses',
       ACTIVE_FAST: 'fasting_app_active', UNLOCKED_BADGES: 'fasting_app_badges',
       USER_MEDS: 'fasting_app_meds', ROUTINE_CONFIG: 'fasting_app_routine_config',
-      BMR_VAL: 'fasting_app_bmr'
+      BMR_VAL: 'fasting_app_bmr', AGE_VAL: 'fasting_app_age'
     };
 
     /* 2.1 BASE DE DATOS AUTOCONTENIDA (INDEXEDDB) PARA FUNCIONAR EN GITHUB PAGES / PWA
@@ -2221,15 +2231,21 @@ body {
 
       getLocalRoutineConfig() {
         const data = localStorage.getItem(STORAGE_KEYS.ROUTINE_CONFIG);
-        if (data) {
+        if (data && data !== 'null') {
           try { return JSON.parse(data); } catch(e) {}
         }
+        if (data === 'null') return null;
         return { name: 'Taekwondo', days: [1, 3], time: '19:00', duration: 60 };
       },
       saveRoutineConfigLocally(config) {
         localStorage.setItem(STORAGE_KEYS.ROUTINE_CONFIG, JSON.stringify(config));
         IndexedDBEngine.put(IDB_STORES.routine, config);
         return config;
+      },
+      clearRoutineConfigLocally() {
+        localStorage.setItem(STORAGE_KEYS.ROUTINE_CONFIG, 'null');
+        IndexedDBEngine.put(IDB_STORES.routine, null);
+        return null;
       },
 
       getLocalBMR() {
@@ -2240,7 +2256,22 @@ body {
       saveBMRLocally(val) {
         const num = parseNumber(val) || 1400;
         localStorage.setItem(STORAGE_KEYS.BMR_VAL, String(num));
-        IndexedDBEngine.put(IDB_STORES.settings, { bmr: num });
+        IndexedDBEngine.get(IDB_STORES.settings).then(existing => {
+          IndexedDBEngine.put(IDB_STORES.settings, Object.assign({}, existing || {}, { bmr: num }));
+        });
+        return num;
+      },
+      getLocalAge() {
+        const data = localStorage.getItem(STORAGE_KEYS.AGE_VAL);
+        const num = parseNumber(data);
+        return num !== null ? num : 35;
+      },
+      saveAgeLocally(val) {
+        const num = parseNumber(val) || 35;
+        localStorage.setItem(STORAGE_KEYS.AGE_VAL, String(num));
+        IndexedDBEngine.get(IDB_STORES.settings).then(existing => {
+          IndexedDBEngine.put(IDB_STORES.settings, Object.assign({}, existing || {}, { age: num }));
+        });
         return num;
       },
 
@@ -2303,6 +2334,11 @@ body {
           localStorage.setItem(STORAGE_KEYS.BMR_VAL, String(finalBmr));
           await IndexedDBEngine.put(IDB_STORES.settings, { bmr: finalBmr });
 
+          const ageLS = parseNumber(localStorage.getItem(STORAGE_KEYS.AGE_VAL));
+          const finalAge = ageLS !== null ? ageLS : (settingsFromIDB && settingsFromIDB.age ? settingsFromIDB.age : 35);
+          localStorage.setItem(STORAGE_KEYS.AGE_VAL, String(finalAge));
+          await IndexedDBEngine.put(IDB_STORES.settings, { bmr: finalBmr, age: finalAge });
+
           if (statusText) statusText.textContent = '🟢 Base de Datos Local Autocontenida Activa';
         } catch (e) {
           console.warn('IndexedDB no disponible, usando localStorage:', e);
@@ -2330,12 +2366,13 @@ body {
     ];
 
     let appState = {
-      activeFast: null, fastingLogs: [], weightLogs: [], exerciseLogs: [], pauseLogs: [], unlockedBadges: [], userMeds: [], routineConfig: null, bmr: 1400, timerInterval: null
+      activeFast: null, fastingLogs: [], weightLogs: [], exerciseLogs: [], pauseLogs: [], unlockedBadges: [], userMeds: [], routineConfig: null, bmr: 1400, age: 35, timerInterval: null
     };
 
     window.openRoutineModal = function() {
       const modal = document.getElementById('modal-routine-config');
-      const cfg = appState.routineConfig || DataAdapter.getLocalRoutineConfig();
+      let cfg = appState.routineConfig || DataAdapter.getLocalRoutineConfig();
+      if (!cfg) cfg = { name: 'Taekwondo', days: [1, 3], time: '19:00', duration: 60 };
       
       const nameInput = document.getElementById('input-routine-name');
       const timeInput = document.getElementById('input-routine-time');
@@ -2386,8 +2423,22 @@ body {
       showToast('📅 Horario de rutina guardado correctamente.');
     };
 
+    window.handleDeleteRoutine = function() {
+      if (confirm('¿Seguro que deseas eliminar esta rutina/actividad?\n\nPodrás configurar una nueva cuando quieras.')) {
+        appState.routineConfig = DataAdapter.clearRoutineConfigLocally();
+        closeRoutineModal();
+        renderExerciseView();
+        showToast('🗑️ Rutina eliminada. Ya no se programará esta actividad.');
+      }
+    };
+
     window.handleQuickCustomRoutineLog = function() {
       const config = appState.routineConfig || DataAdapter.getLocalRoutineConfig();
+      if (!config) {
+        showToast('📋 Primero configura tu rutina de ejercicio.');
+        openRoutineModal();
+        return;
+      }
       const dur = config.duration || 60;
       let kcal = Math.round(dur * 7.5);
       if (config.name.includes('Taekwondo')) kcal = Math.round(dur * 8.3);
@@ -2411,14 +2462,19 @@ body {
       const modal = document.getElementById('modal-config');
       const inputMeds = document.getElementById('input-user-meds');
       const inputBmr = document.getElementById('input-user-bmr');
+      const inputAge = document.getElementById('input-user-age');
 
       if (!appState.bmr) appState.bmr = DataAdapter.getLocalBMR();
+      if (!appState.age) appState.age = DataAdapter.getLocalAge();
 
       if (inputMeds && appState.userMeds) {
         inputMeds.value = appState.userMeds.join(', ');
       }
       if (inputBmr) {
         inputBmr.value = appState.bmr || 1400;
+      }
+      if (inputAge) {
+        inputAge.value = appState.age || 35;
       }
       if (modal) modal.classList.add('active');
     };
@@ -2445,6 +2501,10 @@ body {
         if (DataAdapter.isGoogleAppsScript()) {
           try { google.script.run.saveUserBmr(appState.bmr); } catch(e) {}
         }
+      }
+      if (inputAge) {
+        const val = parseNumber(inputAge.value);
+        appState.age = DataAdapter.saveAgeLocally(val !== null ? val : 35);
       }
       closeConfigModal();
       renderMedsView();
@@ -2787,6 +2847,11 @@ body {
                 localStorage.setItem(STORAGE_KEYS.BMR_VAL, String(appState.bmr));
               }
 
+              if (res.age) {
+                appState.age = parseNumber(res.age) || 35;
+                localStorage.setItem(STORAGE_KEYS.AGE_VAL, String(appState.age));
+              }
+
               renderProfileHeader();
               renderWeightView();
               renderBadgesView();
@@ -2933,8 +2998,11 @@ body {
 
       if (box) {
         const bmr = appState.bmr || 1400;
-        const lowSugg = Math.max(1200, Math.round(bmr * 0.95));
-        const highSugg = Math.round(bmr * 1.06);
+        const age = appState.age || 35;
+        const ageFactor = Math.max(0.85, 1 - (Math.max(0, age - 30) * 0.0035));
+        const adjBmr = Math.round(bmr * ageFactor);
+        const lowSugg = Math.max(1200, Math.round(adjBmr * 0.95));
+        const highSugg = Math.round(adjBmr * 1.06);
 
         let medsText = (appState.userMeds && appState.userMeds.length > 0)
           ? `• <strong>Sinergia con Productos Registrados:</strong> Evaluación activa para <em>${appState.userMeds.join(', ')}</em>.<br>`
@@ -2943,7 +3011,7 @@ body {
         box.innerHTML = `
           <strong>🤖 ANÁLISIS DE SINERGIA BIOLÓGICA (Red Neuronal 16:8):</strong><br>
           • <strong>Meta 82.0 kg:</strong> Faltan <strong>${kgRemaining.toFixed(1)} kg</strong>.<br>
-          • <strong>Sugerencia Calórica Diaria:</strong> Consumir entre <strong>${lowSugg.toLocaleString()} y ${highSugg.toLocaleString()} kcal/día</strong> en tu ventana de alimentación (BMR base: ${bmr.toLocaleString()} kcal/día).<br>
+          • <strong>Sugerencia Calórica Diaria:</strong> Consumir entre <strong>${lowSugg.toLocaleString()} y ${highSugg.toLocaleString()} kcal/día</strong> en tu ventana de alimentación (BMR ajustado a ${age} años: ${adjBmr.toLocaleString()} kcal/día).<br>
           ${tfPredictionHtml}
           ${medsText}
           • <strong>Actividad Diaria (Pasos):</strong> Hoy: <strong>${todaySteps > 0 ? todaySteps.toLocaleString() + ' pasos' : 'sin registrar aún'}</strong> (Meta: 6,000 pasos).
@@ -2975,6 +3043,7 @@ body {
         appState.userMeds = DataAdapter.getLocalUserMeds() || [];
         appState.routineConfig = DataAdapter.getLocalRoutineConfig();
         appState.bmr = DataAdapter.getLocalBMR();
+        appState.age = DataAdapter.getLocalAge();
 
         try { renderProfileHeader(); } catch(e) { console.error('Header err:', e); }
         try { renderWeightView(); } catch(e) { console.error('Weight err:', e); }
@@ -3182,22 +3251,27 @@ body {
       // Actualizar BMR y Sugerencias Calóricas
       if (!appState.bmr) appState.bmr = DataAdapter.getLocalBMR();
       const bmr = appState.bmr || 1400;
+      const age = appState.age || DataAdapter.getLocalAge();
+      const ageFactor = Math.max(0.85, 1 - (Math.max(0, age - 30) * 0.0035));
+      const adjBmr = Math.round(bmr * ageFactor);
       const bmrDisp = document.getElementById('bmr-val-display');
       const calBmrDisp = document.getElementById('cal-bmr-display');
       const calTdeeDisp = document.getElementById('cal-tdee-display');
       const calSuggDisp = document.getElementById('cal-suggested-display');
+      const ageDisp = document.getElementById('age-val-display');
 
       const exLogs = appState.exerciseLogs || [];
       const todayKey = getDayKey(new Date());
       const todayExLog = exLogs.find(e => getDayKey(e.date) === todayKey);
       const todayBurn = todayExLog ? (todayExLog.calories || 200) : 200;
 
-      const tdee = bmr + Math.round(todayBurn * 0.75) + 150;
-      const lowSugg = Math.max(1200, Math.round(bmr * 0.95));
-      const highSugg = Math.round(bmr * 1.06);
+      const tdee = adjBmr + Math.round(todayBurn * 0.75) + 150;
+      const lowSugg = Math.max(1200, Math.round(adjBmr * 0.95));
+      const highSugg = Math.round(adjBmr * 1.06);
 
       if (bmrDisp) bmrDisp.textContent = `${bmr}`;
-      if (calBmrDisp) calBmrDisp.textContent = `${bmr.toLocaleString()} kcal`;
+      if (ageDisp) ageDisp.textContent = `${age}`;
+      if (calBmrDisp) calBmrDisp.textContent = `${adjBmr.toLocaleString()} kcal`;
       if (calTdeeDisp) calTdeeDisp.textContent = `~${tdee.toLocaleString()} kcal`;
       if (calSuggDisp) calSuggDisp.textContent = `${lowSugg.toLocaleString()} - ${highSugg.toLocaleString()} kcal`;
 
@@ -3603,13 +3677,17 @@ body {
       const config = appState.routineConfig;
       const now = new Date();
       const dayOfWeek = now.getDay();
-      const isRoutineDay = config.days.includes(dayOfWeek);
+      const isRoutineDay = config && config.days.includes(dayOfWeek);
 
       const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-      const activeDayNames = config.days.map(d => dayNames[d]).join(' & ');
+      const activeDayNames = config ? config.days.map(d => dayNames[d]).join(' & ') : '';
 
       if (banner) {
-        if (isRoutineDay) {
+        if (!config) {
+          banner.className = 'taekwondo-banner';
+          if (bannerTitle) bannerTitle.textContent = '📋 Sin rutina programada';
+          if (bannerDesc) bannerDesc.textContent = 'Configura una actividad para programar tus días de entrenamiento.';
+        } else if (isRoutineDay) {
           banner.className = 'taekwondo-banner today-active';
           if (bannerTitle) bannerTitle.textContent = `🥋 ¡HOY ES DÍA DE ${config.name.toUpperCase()}! (${config.time} hs)`;
           if (bannerDesc) bannerDesc.textContent = `Sesión habitual programada de ${config.duration} min. ¡A darle con todo!`;
@@ -3621,7 +3699,12 @@ body {
       }
 
       if (quickBtn) {
-        quickBtn.textContent = `⚡ Registrar ${config.name} (${config.duration} min)`;
+        if (!config) {
+          quickBtn.style.display = 'none';
+        } else {
+          quickBtn.style.display = 'inline-block';
+          quickBtn.textContent = `⚡ Registrar ${config.name} (${config.duration} min)`;
+        }
       }
 
       const todayKey = getDayKey(now.toISOString());
@@ -4090,6 +4173,7 @@ body {
       const box = document.getElementById('ai-dashboard-analysis-box');
       if (!box) return;
       const bmr = appState.bmr || 1400;
+      const age = appState.age || 35;
       const meds = appState.userMeds || [];
 
       let medsSynergyText = meds.length > 0
@@ -4098,7 +4182,7 @@ body {
 
       box.innerHTML = `
         <strong>🤖 ANÁLISIS DEL AGENTE IA:</strong><br>
-        • <strong>Tendencia Metabólica:</strong> Regresión lineal orientada a los 82.0 kg con soporte de BMR (${bmr} kcal/día).<br>
+        • <strong>Tendencia Metabólica:</strong> Regresión lineal orientada a los 82.0 kg con soporte de BMR ajustado a ${age} años (${bmr} kcal/día).<br>
         • <strong>Efectos Fisiológicos y Sinergias Verificadas (OMS / PubMed / Universidades):</strong><br>
         ${medsSynergyText}
       `;
@@ -4130,18 +4214,34 @@ body {
       });
     }
 
-    /* 10. BOTÓN DE INSTALACIÓN PWA (se muestra cuando el navegador lo permite) */
+    /* 10. BOTÓN DE INSTALACIÓN PWA (siempre visible cuando la app NO está instalada) */
     let deferredInstallPrompt = null;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    function showInstallButton() {
+      const btn = document.getElementById('btn-install-app');
+      if (btn) btn.style.display = 'inline-flex';
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
-      const btn = document.getElementById('btn-install-app');
-      if (btn) btn.style.display = 'inline-flex';
+      showInstallButton();
     });
+
+    // Si el navegador no dispara beforeinstallprompt, igual mostramos el botón con instrucciones.
+    if (!isStandalone) {
+      window.addEventListener('load', () => {
+        setTimeout(showInstallButton, 1500);
+      });
+    }
+
     window.installPwa = function() {
       if (deferredInstallPrompt) {
         deferredInstallPrompt.prompt();
         deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; });
+      } else {
+        alert('Para instalar la app:\n\n• Android (Chrome): menú ⋮ → "Instalar aplicación" o "Agregar a pantalla principal".\n• iPhone/iPad (Safari): botón Compartir ⎋ → "Añadir a pantalla de inicio".\n• PC (Chrome/Edge): icono "Instalar" de la barra de direcciones.');
       }
     };
   </script>

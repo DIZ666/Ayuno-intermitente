@@ -26,7 +26,13 @@ completa**, fuera del navegador (sin la barra de direcciones).
    - `index.html` (la app completa)
    - `manifest.json`
    - `sw.js`
-   - `icons/` (íconos de la PWA)
+   - Los iconos de la PWA **en la raíz** (sube los archivos sueltos, uno por uno con
+     **Add file → Upload files**; no intentes subir la carpeta `icons/`, GitHub no la acepta):
+     - `icon-192.png`
+     - `icon-512.png`
+     - `icon-512-maskable.png`
+     - `apple-touch-icon.png`
+     - `favicon.svg`
 3. Ve a **Settings → Pages**.
    - En *Build and deployment* selecciona **Deploy from a branch**.
    - Branch: `main` (o `master`) y carpeta `/ (root)`.

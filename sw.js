@@ -1,5 +1,5 @@
 /* Service Worker - Ayuno Intermitente 16:8 (PWA instalable + offline) */
-const CACHE_VERSION = 'ayuno168-v1.0.0';
+const CACHE_VERSION = 'ayuno168-v1.1.0';
 const APP_SHELL = CACHE_VERSION + '-shell';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -7,11 +7,11 @@ const APP_SHELL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/icon-512-maskable.png',
-  './icons/apple-touch-icon.png',
-  './icons/favicon.svg'
+  './icon-192.png',
+  './icon-512.png',
+  './icon-512-maskable.png',
+  './apple-touch-icon.png',
+  './favicon.svg'
 ];
 
 self.addEventListener('install', (event) => {

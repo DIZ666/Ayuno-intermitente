@@ -22,8 +22,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <!-- TensorFlow.js CDN para el Agente IA -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <!-- TensorFlow.js CDN para el Agente IA (defer para no bloquear el render inicial) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
 
   <style>
 /* ==========================================================================
@@ -89,7 +89,6 @@ body {
     radial-gradient(circle at 88% 18%, rgba(114, 9, 183, 0.14), transparent 40%),
     radial-gradient(circle at 50% 100%, rgba(0, 245, 212, 0.12), transparent 45%),
     var(--bg-gradient);
-  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   display: flex;
@@ -122,6 +121,8 @@ body {
   border-top-color: var(--glass-border-bright);
   border-radius: var(--radius-xl);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 14px 40px rgba(0,0,0,0.5);
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 .user-badge {
@@ -199,6 +200,45 @@ body {
   color: var(--cyan-primary);
   text-decoration: none;
   font-weight: 700;
+}
+
+.install-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: linear-gradient(160deg, rgba(255, 183, 3, 0.14), rgba(255, 183, 3, 0.05));
+  border: 1px solid rgba(255, 183, 3, 0.35);
+  border-top-color: rgba(255, 183, 3, 0.5);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+  margin-bottom: -8px;
+}
+.install-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+.install-banner button {
+  background: rgba(255, 183, 3, 0.18);
+  border: 1px solid rgba(255, 183, 3, 0.45);
+  color: #ffd166;
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.install-banner button.install-banner-dismiss {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 4px 6px;
 }
 
 /* Tarjetas Estilo Glassmorphism */
@@ -293,16 +333,16 @@ body {
 /* Secciones / Vistas Pestañas */
 .view-section {
   display: none;
-  animation: fadeIn var(--transition-smooth);
 }
 
 .view-section.active {
   display: block;
+  animation: fadeIn 0.25s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* TEMPORIZADOR CIRCULAR SVG */
@@ -772,6 +812,7 @@ body {
   padding: 8px 12px;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 18px 48px rgba(0, 0, 0, 0.65);
   z-index: 1000;
+  will-change: transform;
 }
 
 .nav-item {
@@ -1256,9 +1297,6 @@ body {
         </div>
       </div>
       <div style="display: flex; gap: 8px; align-items: center;">
-        <button id="btn-install-app" class="btn-primary btn-secondary btn-small" onclick="installPwa()" title="Instalar como aplicación en pantalla completa" style="padding: 6px 12px; font-weight: 700; border-radius: var(--radius-full); font-size: 11px; display: none;">
-          📲 Instalar
-        </button>
         <button class="btn-primary btn-secondary btn-small" onclick="switchView('dashboard')" style="padding: 6px 12px; font-weight: 700; border-radius: var(--radius-full); font-size: 11px;">
           📈 Dashboard
         </button>
@@ -1267,6 +1305,13 @@ body {
         </button>
       </div>
     </header>
+
+    <!-- Banner de instalación PWA (solo cuando la app NO está instalada) -->
+    <div id="install-banner" class="install-banner" style="display: none;">
+      <span class="install-banner-text">📲 <strong>Instala la app</strong> para pantalla completa sin navegador</span>
+      <button onclick="installPwa()">Instalar</button>
+      <button class="install-banner-dismiss" onclick="dismissInstallBanner()" title="Cerrar">✕</button>
+    </div>
 
     <!-- Estado de Base de Datos Autocontenida -->
     <div id="sheets-connection-banner" class="sheets-status-banner" onclick="openConfigModal()">
@@ -3121,7 +3166,18 @@ body {
     }
 
     /* 6. AGENTE IA TENSORFLOW.JS AutoLM (PESO & SINERGIA METABÓLICA) */
+    let aiAgentRunning = false;
     async function runTensorFlowAiAgentAuto() {
+      if (aiAgentRunning) return;
+      aiAgentRunning = true;
+      try {
+        await runTensorFlowAiAgentAutoInner();
+      } finally {
+        aiAgentRunning = false;
+      }
+    }
+
+    async function runTensorFlowAiAgentAutoInner() {
       const box = document.getElementById('ai-prediction-content');
       const quoteElem = document.getElementById('motivation-quote-text');
       const statusBadge = document.getElementById('ai-model-status');
@@ -3170,6 +3226,9 @@ body {
             statusBadge.style.color = "#ffb703";
           }
 
+          // Cede el hilo principal para que la interfaz pinte antes del entrenamiento.
+          await new Promise(r => setTimeout(r, 50));
+
           const validWeights = weights.map(w => ({ ...w, weight: parseNumber(w.weight) })).filter(w => w.weight !== null);
           const firstDate = new Date(validWeights[validWeights.length - 1].date).getTime();
           const xsRaw = validWeights.map(w => (new Date(w.date).getTime() - firstDate) / (1000 * 3600 * 24));
@@ -3182,7 +3241,7 @@ body {
           model.add(tf.layers.dense({ units: 1, inputShape: [1] }));
           model.compile({ loss: 'meanSquaredError', optimizer: tf.train.adam(0.05) });
 
-          await model.fit(xs, ys, { epochs: 60 });
+          await model.fit(xs, ys, { epochs: 25 });
 
           const w = model.getWeights()[0].dataSync()[0];
           xs.dispose(); ys.dispose(); model.dispose();
@@ -4548,25 +4607,38 @@ body {
       });
     }
 
-    /* 10. BOTÓN DE INSTALACIÓN PWA (siempre visible cuando la app NO está instalada) */
+    /* 10. BANNER DE INSTALACIÓN PWA (solo cuando la app NO está instalada) */
     let deferredInstallPrompt = null;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    function showInstallButton() {
-      const btn = document.getElementById('btn-install-app');
-      if (btn) btn.style.display = 'inline-flex';
+    function showInstallBanner() {
+      const banner = document.getElementById('install-banner');
+      if (banner && banner.getAttribute('data-dismissed') !== '1') banner.style.display = 'flex';
     }
+
+    window.dismissInstallBanner = function() {
+      const banner = document.getElementById('install-banner');
+      if (banner) {
+        banner.setAttribute('data-dismissed', '1');
+        banner.style.display = 'none';
+      }
+    };
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
-      showInstallButton();
+      showInstallBanner();
     });
 
-    // Si el navegador no dispara beforeinstallprompt, igual mostramos el botón con instrucciones.
+    window.addEventListener('appinstalled', () => {
+      deferredInstallPrompt = null;
+      dismissInstallBanner();
+    });
+
+    // Si el navegador no dispara beforeinstallprompt, igual mostramos el banner con instrucciones.
     if (!isStandalone) {
       window.addEventListener('load', () => {
-        setTimeout(showInstallButton, 1500);
+        setTimeout(showInstallBanner, 1500);
       });
     }
 

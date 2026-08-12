@@ -1,0 +1,746 @@
+/* ==========================================================================
+   SISTEMA DE DISEÑO iOS GLASSMORPHISM EN TONOS DE AZUL (Ayuno 18:6)
+   ========================================================================== */
+
+:root {
+  /* Paleta de Colores de Fondo y Cristales Glassmorphism Premium (v6.0.0) */
+  --bg-main: #050b18;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #0e224e 0%, #050b18 75%);
+  --glass-bg: rgba(18, 34, 64, 0.65);
+  --glass-card: rgba(255, 255, 255, 0.08);
+  --glass-card-hover: rgba(255, 255, 255, 0.14);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.55), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+  --glass-blur: blur(25px);
+
+  /* Acentos Azules, Turquesa y Neón iOS */
+  --cyan-primary: #00f5d4;
+  --blue-electric: #00b4d8;
+  --blue-deep: #0077b6;
+  --blue-glow: rgba(0, 245, 212, 0.35);
+  --purple-accent: #7209b7;
+  --gold-accent: #ffb703;
+
+  /* Texto */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-muted: rgba(255, 255, 255, 0.5);
+
+  /* Estado / Badges */
+  --color-success: #00f5d4;
+  --color-warning: #ffb703;
+  --color-danger: #ff4d6d;
+  --color-info: #48cae4;
+
+  /* Radios y Transiciones */
+  --radius-xl: 26px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-full: 9999px;
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reset Básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--bg-main);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-bottom: 90px; /* Espacio para barra de navegación iOS */
+  overflow-x: hidden;
+}
+
+/* Contenedor Principal de la App (Móvil First Centrado) */
+#app-container {
+  width: 100%;
+  max-width: 480px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Cabecera Estilo iOS Status Bar & Perfil */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--glass-shadow);
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--blue-electric), var(--cyan-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 0 15px var(--blue-glow);
+}
+
+.user-info h2 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.user-info p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.target-badge {
+  background: rgba(0, 245, 212, 0.12);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+  color: var(--cyan-primary);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Tarjetas Estilo Glassmorphism */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 22px;
+  box-shadow: var(--glass-shadow);
+  transition: transform var(--transition-smooth), border-color var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(60deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  pointer-events: none;
+}
+
+/* Secciones / Vistas Pestañas */
+.view-section {
+  display: none;
+  animation: fadeIn var(--transition-smooth);
+}
+
+.view-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --------------------------------------------------------------------------
+   TEMPORIZADOR CIRCULAR SVG (Vista Cronómetro)
+   -------------------------------------------------------------------------- */
+.timer-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.timer-ring-container {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 15px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-circle-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 12;
+}
+
+.timer-circle-progress {
+  fill: none;
+  stroke: url(#timerGradient);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 754;
+  stroke-dashoffset: 754;
+  transition: stroke-dashoffset 1s linear;
+  filter: drop-shadow(0 0 8px var(--blue-glow));
+}
+
+.timer-display {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--cyan-primary);
+  background: rgba(0, 245, 212, 0.15);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 8px;
+}
+
+.timer-time {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.75));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.timer-subtext {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Botones Principales iOS */
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: linear-gradient(135deg, var(--blue-electric), var(--blue-deep));
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 180, 216, 0.4);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+  box-shadow: 0 3px 10px rgba(0, 180, 216, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff4d6d, #c9184a);
+  box-shadow: 0 6px 20px rgba(255, 77, 109, 0.35);
+}
+
+.btn-secondary {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+
+.btn-secondary:hover {
+  background: var(--glass-card-hover);
+}
+
+/* Tarjeta Resumen Rápida de Etapa en Cronómetro */
+.current-stage-card {
+  margin-top: 20px;
+  background: rgba(0, 180, 216, 0.1);
+  border: 1px solid rgba(0, 180, 216, 0.25);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  text-align: left;
+}
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.stage-icon {
+  font-size: 24px;
+}
+
+.stage-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cyan-primary);
+}
+
+.stage-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   VISTA ETAPAS DEL CUERPO (Mi Cuerpo en Ayuno)
+   -------------------------------------------------------------------------- */
+.body-stages-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 15px;
+}
+
+.stage-card {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  position: relative;
+  transition: all var(--transition-smooth);
+}
+
+.stage-card.current-active {
+  background: rgba(0, 245, 212, 0.12);
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 20px rgba(0, 245, 212, 0.2);
+}
+
+.stage-card.current-active::before {
+  content: 'EN CURSO';
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--cyan-primary);
+  color: #000;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+}
+
+.stage-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.stage-badge-hours {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.stage-info h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.stage-info .stage-sub {
+  font-size: 12px;
+  color: var(--cyan-primary);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.stage-details-list {
+  margin-top: 10px;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.stage-benefit-tag {
+  display: inline-block;
+  margin-top: 8px;
+  background: rgba(114, 9, 183, 0.25);
+  border: 1px solid rgba(114, 9, 183, 0.4);
+  color: #d8b4fe;
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: var(--radius-md);
+}
+
+/* --------------------------------------------------------------------------
+   VISTA CONTROL DE PESO (Meta 82 Kg)
+   -------------------------------------------------------------------------- */
+.weight-hero {
+  text-align: center;
+}
+
+.weight-progress-box {
+  margin: 20px 0;
+}
+
+.weight-numbers {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 15px;
+}
+
+.weight-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.weight-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.weight-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--glass-border);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--blue-electric), var(--cyan-primary));
+  border-radius: var(--radius-full);
+  transition: width 1s ease-out;
+  box-shadow: 0 0 12px var(--cyan-primary);
+}
+
+.motivation-quote {
+  background: rgba(255, 183, 3, 0.1);
+  border: 1px solid rgba(255, 183, 3, 0.3);
+  color: #ffe066;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-style: italic;
+  margin-top: 15px;
+  line-height: 1.4;
+}
+
+.weight-history-list {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weight-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--glass-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--glass-border);
+  font-size: 14px;
+}
+
+.weight-diff {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.weight-diff.loss {
+  background: rgba(0, 245, 212, 0.2);
+  color: var(--cyan-primary);
+}
+
+.weight-diff.gain {
+  background: rgba(255, 77, 109, 0.2);
+  color: var(--color-danger);
+}
+
+/* --------------------------------------------------------------------------
+   VISTA LOGROS Y PREMIOS (Gamificación)
+   -------------------------------------------------------------------------- */
+.badges-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.badge-card {
+  background: var(--glass-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  opacity: 0.45;
+  filter: grayscale(80%);
+  transition: all var(--transition-smooth);
+}
+
+.badge-card.unlocked {
+  opacity: 1;
+  filter: grayscale(0%);
+  border-color: var(--cyan-primary);
+  background: rgba(0, 180, 216, 0.12);
+  box-shadow: 0 0 15px rgba(0, 180, 216, 0.2);
+}
+
+.badge-icon {
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+
+.badge-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.badge-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+/* --------------------------------------------------------------------------
+   BARRA DE NAVEGACIÓN INFERIOR ESTILO iOS
+   -------------------------------------------------------------------------- */
+.ios-nav-bar {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: rgba(10, 20, 40, 0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-full);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.nav-item-icon {
+  font-size: 20px;
+}
+
+.nav-item.active {
+  color: var(--cyan-primary);
+  transform: translateY(-2px);
+}
+
+.nav-item.active .nav-item-icon {
+  filter: drop-shadow(0 0 6px var(--cyan-primary));
+}
+
+/* --------------------------------------------------------------------------
+   MODALES Y POPUPS
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(5, 11, 24, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-smooth);
+  padding: 20px;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--glass-shadow);
+  text-align: center;
+  transform: scale(0.9);
+  transition: transform var(--transition-smooth);
+}
+
+.modal-overlay.active .modal-card {
+  transform: scale(1);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  margin: 16px 0;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.form-input:focus {
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 10px var(--blue-glow);
+}
+
+/* Canvas para Confeti */
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 3000;
+}
+
+/* Dashboard & SVG Chart Styles (v6.0.0) */
+.chart-card-container {
+  background: rgba(14, 28, 54, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-top: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.chart-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chart-badge-trend {
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(0, 245, 212, 0.15);
+  color: var(--cyan-primary);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(0, 245, 212, 0.3);
+}
+
+.svg-chart-wrapper {
+  width: 100%;
+  height: 180px;
+  position: relative;
+  overflow: hidden;
+}
+
+.svg-chart {
+  width: 100%;
+  height: 100%;
+}

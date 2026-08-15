@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -1804,7 +1804,7 @@ body {
     </section>
 
     <footer class="app-footer">
-      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.3.1</span> • Base de Datos Local Autocontenida
+      Ayuno Intermitente 16:8 • <span id="app-version-footer">v6.2.0</span> • Base de Datos Local Autocontenida
     </footer>
 
   </div> <!-- /#app-container -->
@@ -2141,7 +2141,7 @@ body {
        SCRIPTS JAVASCRIPT v4.0.0 MULTI-DEVICE REAL-TIME SYNC
        ==================================================================== -->
   <script>
-    const APP_VERSION = 'v6.3.1';
+    const APP_VERSION = 'v6.2.0';
 
     function parseNumber(val) {
       if (val === null || val === undefined || val === '') return null;
@@ -2627,30 +2627,106 @@ body {
       }
     };
 
-    /* 3. LÓGICA PRINCIPAL DE LA APP */
+    /* 3. LÓGICA PRINCIPAL DE LA APP & RECOMPENSAS */
     const BADGES = [
-      { id: 'first_fast', icon: '🚀', name: 'Primer Paso', desc: 'Iniciaste tu primer ayuno intermitente.' },
+      { id: 'first_fast', icon: '🚀', name: 'Primer Paso', desc: 'Iniciaste tu primer ayuno intermitente.', isFirst: true },
       { id: 'fast_16h', icon: '🏆', name: 'Ayuno 16:8 Completado', desc: 'Completaste con éxito las 16 horas de eficacia científica.' },
       { id: 'autophagy_master', icon: '✨', name: 'Maestro de la Autofagia', desc: 'Entraste a la fase extendida de reciclaje celular (16-18h+).' },
-      { id: 'night_warrior', icon: '🌙', name: 'Guerrero Nocturno', desc: 'Superaste 12 horas consecutivas de ayuno (Modelo 12:12).' },
+      { id: 'night_warrior', icon: '🌙', name: 'Guerrero Nocturno', desc: 'Superaste 12 horas consecutivas de ayuno.' },
       { id: 'weight_logged', icon: '⚖️', name: 'Registro de Peso', desc: 'Registraste tu peso en la aplicación.' },
-      { id: 'loss_1kg', icon: '🔥', name: 'Primer Kilo Menos', desc: 'Lograste reducir 1 kg desde tu peso inicial.' },
-      { id: 'halfway_goal', icon: '⚡', name: 'Mitad de Camino', desc: 'Avanzaste el 50% del trayecto hacia tu meta de 82 kg.' },
-      { id: 'goal_82kg', icon: '👑', name: 'CAMPEÓN 82 KG', desc: '¡Alcanzaste tu meta soñada de 82 kg! Logro Máximo.' },
-      { id: 'taekwondo_warrior', icon: '🥋', name: 'Guerrero Taekwondo', desc: 'Completaste una sesión de 1h de Taekwondo.' },
-      { id: 'hercules_strength', icon: '🏋️‍♂️', name: 'Fuerza Hércules', desc: 'Entrenaste 30 min en tu máquina de pesas Hércules.' },
+      { id: 'weight_loss_dynamic', icon: '🔥', name: 'Kilos Perdidos', desc: 'Evolución de peso reducido hacia tu meta.', isDynamicWeight: true },
+      { id: 'taekwondo_warrior', icon: '🥋', name: 'Guerrero Taekwondo', desc: 'Completaste una sesión de Taekwondo.' },
+      { id: 'hercules_strength', icon: '🏋️‍♂️', name: 'Fuerza Hércules', desc: 'Entrenaste en tu máquina de pesas Hércules.' },
       { id: 'trekking_explorer', icon: '🥾', name: 'Explorador Trekking', desc: 'Realizaste una caminata o trekking al aire libre.' },
       { id: 'huawei_steps_6k', icon: '🚶‍♂️', name: 'Caminante 6K', desc: 'Alcanzaste la meta diaria de 6,000 pasos.' },
-      { id: 'pause_master', icon: '⏸️', name: 'Pausa Consciente', desc: 'Registraste un día de cena especial manteniendo el control sin culpa.' },
-      { id: 'metabolic_synergy', icon: '⚡', name: 'Sinergia Metabólica', desc: 'Combinaste Ayuno 16:8, ejercicio y optimización metabólica.' }
+      { id: 'pause_master', icon: '⏸️', name: 'Pausa Consciente', desc: 'Registraste un día de cena especial manteniendo el control.' },
+      { id: 'metabolic_synergy', icon: '⚡', name: 'Sinergia Metabólica', desc: 'Combinaste Ayuno 16:8 con ejercicio activo.' }
     ];
 
+    function getBadgeMultiplierAndState(badge) {
+      const fastingLogs = appState.fastingLogs || [];
+      const weightLogs = appState.weightLogs || [];
+      const exerciseLogs = appState.exerciseLogs || [];
+      const pauseLogs = appState.pauseLogs || [];
+      const unlocked = appState.unlockedBadges || [];
+      const targetW = appState.targetWeight || DataAdapter.getLocalTargetWeight() || 82;
+
+      let count = 0;
+      let unlockedState = unlocked.includes(badge.id);
+      let customName = badge.name;
+      let customDesc = badge.desc;
+      let customIconStyle = '';
+
+      if (badge.id === 'first_fast') {
+        count = fastingLogs.length > 0 ? 1 : (unlockedState ? 1 : 0);
+        unlockedState = count > 0;
+      } else if (badge.id === 'fast_16h') {
+        count = fastingLogs.filter(f => (f.durationHours || 0) >= 16).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'autophagy_master') {
+        count = fastingLogs.filter(f => (f.durationHours || 0) >= 17).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'night_warrior') {
+        count = fastingLogs.filter(f => (f.durationHours || 0) >= 12).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'weight_logged') {
+        count = weightLogs.length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'weight_loss_dynamic') {
+        let initialW = weightLogs.length > 0 ? parseNumber(weightLogs[weightLogs.length - 1].weight) : null;
+        let currentW = weightLogs.length > 0 ? parseNumber(weightLogs[0].weight) : null;
+        
+        let kgLost = 0;
+        if (initialW !== null && currentW !== null && initialW > currentW) {
+          kgLost = Math.floor(initialW - currentW);
+        }
+
+        count = kgLost;
+        if (kgLost >= 1) {
+          unlockedState = true;
+          const wordKg = kgLost === 1 ? 'Kilo Perdido' : 'Kilos Perdidos';
+          customName = `-${kgLost} ${wordKg}`;
+          customDesc = `Has reducido ${kgLost} kg desde tu peso inicial hacia los ${targetW.toFixed(1)} kg.`;
+          
+          const totalGoalKg = Math.max(1, (initialW || 88) - targetW);
+          const ratio = Math.min(1, Math.max(0, kgLost / totalGoalKg));
+          const hue = Math.round(35 + ratio * 130);
+          customIconStyle = `style="color: hsl(${hue}, 100%, 50%); text-shadow: 0 0 12px rgba(0, 245, 212, ${0.3 + ratio * 0.4});"`;
+        } else {
+          unlockedState = false;
+          customName = 'Pérdida de Peso';
+          customDesc = `Reduce tu primer 1 kg para activar la evolución de logros hacia los ${targetW.toFixed(1)} kg.`;
+        }
+      } else if (badge.id === 'taekwondo_warrior') {
+        count = exerciseLogs.filter(e => e.type && e.type.includes('Taekwondo')).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'hercules_strength') {
+        count = exerciseLogs.filter(e => e.type && (e.type.includes('Hércules') || e.type.includes('Pesas'))).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'trekking_explorer') {
+        count = exerciseLogs.filter(e => e.type && (e.type.includes('Trekking') || e.type.includes('Senderismo'))).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'huawei_steps_6k') {
+        count = exerciseLogs.filter(e => (e.steps || 0) >= 6000).length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'pause_master') {
+        count = pauseLogs.length;
+        unlockedState = count > 0;
+      } else if (badge.id === 'metabolic_synergy') {
+        const fastDays = new Set(fastingLogs.map(f => getDayKey(f.startTime || f.date)));
+        count = exerciseLogs.filter(e => fastDays.has(getDayKey(e.date))).length;
+        if (count === 0 && fastingLogs.length > 0 && exerciseLogs.length > 0) count = 1;
+        unlockedState = count > 0;
+      }
+
+      return { count, unlockedState, customName, customDesc, customIconStyle };
+    }
+
     function getBadgeDisplayText(badge) {
-      const tw = (appState.targetWeight || DataAdapter.getLocalTargetWeight());
-      const twLabel = `${tw.toFixed(1)} kg`;
+      const state = getBadgeMultiplierAndState(badge);
       return {
-        name: badge.name.replace(/82\s*KG/g, twLabel.toUpperCase()).replace(/82\s*kg/g, twLabel),
-        desc: badge.desc.replace(/82\s*kg/g, twLabel)
+        name: state.customName,
+        desc: state.customDesc
       };
     }
 
@@ -3792,18 +3868,25 @@ body {
     function renderBadgesView() {
       const container = document.getElementById('badges-grid-container');
       if (!container) return;
-      const unlocked = appState.unlockedBadges;
+      
       const metaText = document.getElementById('badges-meta-text');
-      if (metaText) metaText.textContent = `Gana medallas cumpliendo tus ayunos 16:8 y bajando hacia los ${(appState.targetWeight || 82)} kg.`;
+      const targetW = (appState.targetWeight || DataAdapter.getLocalTargetWeight() || 82);
+      if (metaText) metaText.textContent = `Gana medallas y suma repeticiones (xN) en tu evolución hacia los ${targetW.toFixed(1)} kg.`;
 
       container.innerHTML = BADGES.map(badge => {
-        const isUnlocked = unlocked.includes(badge.id);
-        const display = getBadgeDisplayText(badge);
+        const state = getBadgeMultiplierAndState(badge);
+        
+        let countTagHtml = '';
+        if (state.unlockedState && !badge.isFirst && state.count > 0) {
+          countTagHtml = `<div class="badge-count-tag">x${state.count}</div>`;
+        }
+
         return `
-          <div class="badge-card ${isUnlocked ? 'unlocked' : ''}">
-            <div class="badge-icon">${badge.icon}</div>
-            <div class="badge-name">${display.name}</div>
-            <div class="badge-desc">${display.desc}</div>
+          <div class="badge-card ${state.unlockedState ? 'unlocked' : ''}">
+            ${countTagHtml}
+            <div class="badge-icon" ${state.customIconStyle}>${badge.icon}</div>
+            <div class="badge-name">${state.customName}</div>
+            <div class="badge-desc">${state.customDesc}</div>
           </div>
         `;
       }).join('');
@@ -3811,40 +3894,50 @@ body {
       runBadgesAiAgent();
     }
 
-    /* AGENTE IA DE LOGROS E HISTORIAL METABÓLICO */
+    /* AGENTE IA DE LOGROS E HISTORIAL METABÓLICO (Efectos Fisiológicos OMS / PubMed) */
     function runBadgesAiAgent() {
       const box = document.getElementById('ai-badges-analysis-box');
       if (!box) return;
 
       const fastingLogs = appState.fastingLogs || [];
       const exerciseLogs = appState.exerciseLogs || [];
-      const unlockedBadges = appState.unlockedBadges || [];
+      const weightLogs = appState.weightLogs || [];
       const userMeds = appState.userMeds || [];
+      const targetWeight = appState.targetWeight || DataAdapter.getLocalTargetWeight() || 82;
 
-      const fastingCount = fastingLogs.length;
+      const fasting16Count = fastingLogs.filter(f => (f.durationHours || 0) >= 16).length;
       const totalHoursFasted = fastingLogs.reduce((acc, curr) => acc + (curr.durationHours || 0), 0);
       const exCount = exerciseLogs.length;
-      const unlockedCount = unlockedBadges.length;
 
-      let score = Math.min(100, Math.round((fastingCount * 5) + (exCount * 4) + (unlockedCount * 6)));
-      let flexLevel = 'En Desarrollo';
-      if (score >= 80) flexLevel = 'Excelente (Flexibilidad Metabólica Alta)';
-      else if (score >= 40) flexLevel = 'Optimizándose (Buena Sensibilidad a la Insulina)';
+      let initialW = weightLogs.length > 0 ? parseNumber(weightLogs[weightLogs.length - 1].weight) : null;
+      let currentW = weightLogs.length > 0 ? parseNumber(weightLogs[0].weight) : null;
+      let kgLost = (initialW && currentW && initialW > currentW) ? (initialW - currentW) : 0;
 
-      let medsInfo = '';
-      if (userMeds.length > 0) {
-        medsInfo = `• <strong>Sinergia con Medicamentos/Suplementos:</strong> Evaluación activa para <em>${userMeds.join(', ')}</em>.<br>`;
-      } else {
-        medsInfo = `• <strong>Impacto Metabólico:</strong> Reducción de adiposidad abdominal y optimización de insulina por protocolo de ayuno 16:8.<br>`;
+      let mechanismsHtml = '';
+      if (fasting16Count > 0) {
+        mechanismsHtml += `• <strong>Ayunos 16:8 (x${fasting16Count}):</strong> Activación de mitofagia celular (ULK1/AMPK), cetogénesis hepática (beta-hidroxibutirato) y supresión de la vía mTOR durante la fase de ayuno.<br>`;
+      }
+      if (kgLost >= 1) {
+        mechanismsHtml += `• <strong>Pérdida de Peso (-${kgLost.toFixed(1)} kg):</strong> Disminución del tamaño de adipocitos viscerales, reducción de citoquinas proinflamatorias (TNF-α, IL-6) y restauración de la sensibilidad insulínica.<br>`;
+      }
+      if (exCount > 0) {
+        mechanismsHtml += `• <strong>Sinergia de Ejercicio (x${exCount}):</strong> Traslocación masiva de vesículas GLUT4 independiente de insulina y depleción de glucógeno muscular.<br>`;
       }
 
+      if (!mechanismsHtml) {
+        mechanismsHtml = `• <strong>Protocolo 16:8 Base:</strong> Suprime la insulina y activa lipólisis continua.<br>`;
+      }
+
+      let medsInfo = (userMeds.length > 0)
+        ? `• <strong>Sinergia con Fármacos Registrados:</strong> Evaluación activa para <em>${userMeds.join(', ')}</em>.<br>`
+        : '';
+
       box.innerHTML = `
-        <strong>🤖 ANÁLISIS HOLÍSTICO DEL AGENTE DE LOGROS:</strong><br>
-        • <strong>Nivel de Flexibilidad Metabólica:</strong> ${score}% — <em>${flexLevel}</em>.<br>
-        • <strong>Historial de Ayunos:</strong> ${fastingCount} ciclos completados (~${totalHoursFasted.toFixed(0)} horas totales en ayuno).<br>
-        • <strong>Entrenamientos Registrados:</strong> ${exCount} sesiones deportivas activas.<br>
+        <strong>🤖 ANÁLISIS FISIOLÓGICO DE LOGROS (AutoLM Clínico / OMS / PubMed):</strong><br>
+        • <strong>Historial Acumulado:</strong> ${fastingLogs.length} ciclos (~${totalHoursFasted.toFixed(0)}h totales en ayuno) • ${exCount} entrenamientos.<br>
+        ${mechanismsHtml}
         ${medsInfo}
-        • <strong>Insignias Desbloqueadas:</strong> ${unlockedCount} de ${BADGES.length} medallas alcanzadas. ¡Sigue adelante hacia los ${appState.targetWeight || 82} kg!
+        • <strong>Evolución Metabólica:</strong> Avance adaptativo hacia tu meta de ${targetWeight.toFixed(1)} kg respaldado por literatura clínica.
       `;
     }
 

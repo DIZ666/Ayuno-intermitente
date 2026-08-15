@@ -1,5 +1,5 @@
 /**
- * BACKEND EN GOOGLE APPS SCRIPT (Code.gs) v6.1.0
+ * BACKEND EN GOOGLE APPS SCRIPT (Code.gs) v6.2.0
  * SINCRONIZACIÓN MULTIDISPOSITIVO REAL (PC + MÓVIL) DE AYUNOS, PESO, EJERCICIO, FÁRMACOS Y BMR (1400 kcal)
  */
 
@@ -12,7 +12,7 @@ function doGet(e) {
   }
 
   return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('Ayuno Intermitente 16:8 - v6.1.0')
+    .setTitle('Ayuno Intermitente 16:8 - v6.2.0')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

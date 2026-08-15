@@ -1,5 +1,5 @@
 /**
- * Adaptador de Datos para Ayuno Intermitente v6.1.0
+ * Adaptador de Datos para Ayuno Intermitente v6.2.0
  * Maneja persistencia híbrida entre Google Sheets (Apps Script) y localStorage local.
  */
 
